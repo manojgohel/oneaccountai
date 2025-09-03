@@ -14,7 +14,7 @@ import Logo from "./Logo"
 export default function HeaderComponent({ title }: { title?: string }) {
     return (
         <>
-            <header className="sticky bottom-0 flex shrink-0 items-center gap-2">
+            <header className="sticky bottom-0 flex shrink-0 items-center gap-2 px-2 py-2 shadow-lg  z-10 border-t">
                 <div className="flex flex-1 items-center gap-2 px-1">
                     <SidebarTrigger className="cursor-pointer" />
                     <Separator

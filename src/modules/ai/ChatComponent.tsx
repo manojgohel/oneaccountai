@@ -152,11 +152,19 @@ const ChatComponent = ({ models }: ChatComponentProps) => {
 
     return (
         <div className="flex min-h-full flex-col">
+            {messages.length === 0 && status !== 'streaming' && (
+                <div className="flex flex-1 flex-col items-center justify-center  text-center">
+                    <h1 className="text-2xl font-semibold">Welcome to One Account AI</h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Ask any question related to One Account and get instant answers from 50+ premium AI models.
+                    </p>
+                </div>
+            )}
             {/* Messages Container */}
             <div className="flex-1 p-1">
                 <div className="max-w-6xl mx-auto px-1">
                     {/* messages */}
-                    {messages.map((message, messageIndex) => (
+                    {messages && messages.map((message, messageIndex) => (
                         <div key={message.id} className="mb-4">
                             {message.role === 'assistant' && message.parts.filter(
                                 (part) => part.type === 'source-url',

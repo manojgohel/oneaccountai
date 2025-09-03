@@ -15,7 +15,8 @@ import {
     PromptInputTools,
 } from '@/components/prompt-input';
 import {
-    GlobeIcon
+    GlobeIcon,
+    Paperclip
 } from 'lucide-react';
 
 
@@ -28,6 +29,12 @@ export default function PromptInputComponent({ handleSubmit, setInput, input, se
             />
             <PromptInputToolbar>
                 <PromptInputTools>
+                    <PromptInputButton
+                        variant={webSearch ? 'default' : 'ghost'}
+                        onClick={() => setWebSearch(!webSearch)}
+                    >
+                        <Paperclip size={16} />
+                    </PromptInputButton>
                     <PromptInputButton
                         variant={webSearch ? 'default' : 'ghost'}
                         onClick={() => setWebSearch(!webSearch)}
