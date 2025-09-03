@@ -1,26 +1,8 @@
 'use client';
 
 import { Action, Actions } from '@/components/actions';
-import {
-    Conversation,
-    ConversationContent,
-    ConversationScrollButton,
-} from '@/components/conversation';
 import { Loader } from '@/components/loader';
 import { Message, MessageContent } from '@/components/message';
-import {
-    PromptInput,
-    PromptInputButton,
-    PromptInputModelSelect,
-    PromptInputModelSelectContent,
-    PromptInputModelSelectItem,
-    PromptInputModelSelectTrigger,
-    PromptInputModelSelectValue,
-    PromptInputSubmit,
-    PromptInputTextarea,
-    PromptInputToolbar,
-    PromptInputTools,
-} from '@/components/prompt-input';
 import {
     Reasoning,
     ReasoningContent,
@@ -37,7 +19,6 @@ import { cn } from '@/lib/utils';
 import { useChat } from '@ai-sdk/react';
 import {
     CopyIcon,
-    GlobeIcon,
     HeartIcon,
     RefreshCcwIcon,
     ShareIcon,
@@ -45,6 +26,7 @@ import {
     ThumbsUpIcon
 } from 'lucide-react';
 import { useState } from 'react';
+import PromptInputComponent from './PromptInputComponent';
 
 // const models = [
 //     {
@@ -168,157 +150,136 @@ const ChatComponent = ({ models }: ChatComponentProps) => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
-            <div className="flex flex-col h-full">
-                <Conversation className="h-full">
-                    <ConversationContent>
-                        {messages.map((message, messageIndex) => (
-                            <div key={message.id}>
-                                {message.role === 'assistant' && (
-                                    <Sources>
-                                        <SourcesTrigger
-                                            count={
-                                                message.parts.filter(
-                                                    (part) => part.type === 'source-url',
-                                                ).length
-                                            }
-                                        />
-                                        {message.parts.filter((part) => part.type === 'source-url').map((part, i) => (
-                                            <SourcesContent key={`${message.id}-${i}`}>
-                                                <Source
-                                                    key={`${message.id}-${i}`}
-                                                    href={part.url}
-                                                    title={part.url}
-                                                />
-                                            </SourcesContent>
-                                        ))}
-                                    </Sources>
-                                )}
-                                <Message from={message.role} key={message.id}>
-                                    <MessageContent>
-                                        {message.parts.map((part, i) => {
-                                            const isLastMessage = messageIndex === messages.length - 1;
-                                            switch (part.type) {
-                                                case 'text':
-                                                    return (
-                                                        <div key={`${message.id}-${i}`}>
-                                                            <Response>
-                                                                {part.text}
-                                                            </Response>
-                                                            {message.role === 'assistant' && (
-                                                                <Actions className={cn(
-                                                                    "mt-2 transition-opacity duration-200",
-                                                                    isLastMessage ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                                                                )}>
-                                                                    <Action
-                                                                        onClick={() => regenerate()}
-                                                                        tooltip="Retry"
-                                                                        label="Retry"
-                                                                        disabled={!isLastMessage || status === 'streaming'}
-                                                                    >
-                                                                        <RefreshCcwIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        onClick={() => handleCopy(part.text)}
-                                                                        tooltip="Copy"
-                                                                        label="Copy"
-                                                                    >
-                                                                        <CopyIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        onClick={() => handleLike(message.id)}
-                                                                        tooltip="Like"
-                                                                        label="Like"
-                                                                        variant={likedMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                    >
-                                                                        <ThumbsUpIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        onClick={() => handleDislike(message.id)}
-                                                                        tooltip="Dislike"
-                                                                        label="Dislike"
-                                                                        variant={dislikedMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                    >
-                                                                        <ThumbsDownIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        onClick={() => handleShare(part.text)}
-                                                                        tooltip="Share"
-                                                                        label="Share"
-                                                                    >
-                                                                        <ShareIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        onClick={() => handleFavorite(message.id)}
-                                                                        tooltip="Favorite"
-                                                                        label="Favorite"
-                                                                        variant={favoriteMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                    >
-                                                                        <HeartIcon className="size-3" />
-                                                                    </Action>
-                                                                </Actions>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                case 'reasoning':
-                                                    return (
-                                                        <Reasoning
-                                                            key={`${message.id}-${i}`}
-                                                            className="w-full"
-                                                            isStreaming={status === 'streaming'}
-                                                        >
-                                                            <ReasoningTrigger />
-                                                            <ReasoningContent>{part.text}</ReasoningContent>
-                                                        </Reasoning>
-                                                    );
-                                                default:
-                                                    return null;
-                                            }
-                                        })}
-                                    </MessageContent>
-                                </Message>
-                            </div>
-                        ))}
-                        {status === 'submitted' && <Loader />}
-                    </ConversationContent>
-                    <ConversationScrollButton />
-                </Conversation>
-
-                <PromptInput onSubmit={handleSubmit} className="mt-4">
-                    <PromptInputTextarea
-                        onChange={(e) => setInput(e.target.value)}
-                        value={input}
-                    />
-                    <PromptInputToolbar>
-                        <PromptInputTools>
-                            <PromptInputButton
-                                variant={webSearch ? 'default' : 'ghost'}
-                                onClick={() => setWebSearch(!webSearch)}
-                            >
-                                <GlobeIcon size={16} />
-                                <span>Search</span>
-                            </PromptInputButton>
-                            <PromptInputModelSelect
-                                onValueChange={(value) => {
-                                    setModel(value);
-                                }}
-                                value={model}
-                            >
-                                <PromptInputModelSelectTrigger>
-                                    <PromptInputModelSelectValue />
-                                </PromptInputModelSelectTrigger>
-                                <PromptInputModelSelectContent>
-                                    {models.map((model) => (
-                                        <PromptInputModelSelectItem key={model.id} value={model.id}>
-                                            {model.name}
-                                        </PromptInputModelSelectItem>
+        <div className="mx-auto relative w-full min-h-screen">
+            {/* Messages Container */}
+            <div className="p-1 pb-32">
+                <div className="max-w-4xl mx-auto px-1">
+                    {messages.map((message, messageIndex) => (
+                        <div key={message.id}>
+                            {message.role === 'assistant' && (
+                                <Sources>
+                                    <SourcesTrigger
+                                        count={
+                                            message.parts.filter(
+                                                (part) => part.type === 'source-url',
+                                            ).length
+                                        }
+                                    />
+                                    {message.parts.filter((part) => part.type === 'source-url').map((part, i) => (
+                                        <SourcesContent key={`${message.id}-${i}`}>
+                                            <Source
+                                                key={`${message.id}-${i}`}
+                                                href={part.url}
+                                                title={part.url}
+                                            />
+                                        </SourcesContent>
                                     ))}
-                                </PromptInputModelSelectContent>
-                            </PromptInputModelSelect>
-                        </PromptInputTools>
-                        <PromptInputSubmit disabled={!input} status={status} />
-                    </PromptInputToolbar>
-                </PromptInput>
+                                </Sources>
+                            )}
+                            <Message from={message.role} key={message.id}>
+                                <MessageContent>
+                                    {message.parts.map((part, i) => {
+                                        const isLastMessage = messageIndex === messages.length - 1;
+                                        switch (part.type) {
+                                            case 'text':
+                                                return (
+                                                    <div key={`${message.id}-${i}`}>
+                                                        <Response>
+                                                            {part.text}
+                                                        </Response>
+                                                        {message.role === 'assistant' && (
+                                                            <Actions className={cn(
+                                                                "mt-2 transition-opacity duration-200",
+                                                                isLastMessage ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                                            )}>
+                                                                <Action
+                                                                    onClick={() => regenerate()}
+                                                                    tooltip="Retry"
+                                                                    label="Retry"
+                                                                    disabled={!isLastMessage || status === 'streaming'}
+                                                                >
+                                                                    <RefreshCcwIcon className="size-3" />
+                                                                </Action>
+                                                                <Action
+                                                                    onClick={() => handleCopy(part.text)}
+                                                                    tooltip="Copy"
+                                                                    label="Copy"
+                                                                >
+                                                                    <CopyIcon className="size-3" />
+                                                                </Action>
+                                                                <Action
+                                                                    onClick={() => handleLike(message.id)}
+                                                                    tooltip="Like"
+                                                                    label="Like"
+                                                                    variant={likedMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                >
+                                                                    <ThumbsUpIcon className="size-3" />
+                                                                </Action>
+                                                                <Action
+                                                                    onClick={() => handleDislike(message.id)}
+                                                                    tooltip="Dislike"
+                                                                    label="Dislike"
+                                                                    variant={dislikedMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                >
+                                                                    <ThumbsDownIcon className="size-3" />
+                                                                </Action>
+                                                                <Action
+                                                                    onClick={() => handleShare(part.text)}
+                                                                    tooltip="Share"
+                                                                    label="Share"
+                                                                >
+                                                                    <ShareIcon className="size-3" />
+                                                                </Action>
+                                                                <Action
+                                                                    onClick={() => handleFavorite(message.id)}
+                                                                    tooltip="Favorite"
+                                                                    label="Favorite"
+                                                                    variant={favoriteMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                >
+                                                                    <HeartIcon className="size-3" />
+                                                                </Action>
+                                                            </Actions>
+                                                        )}
+                                                    </div>
+                                                );
+                                            case 'reasoning':
+                                                return (
+                                                    <Reasoning
+                                                        key={`${message.id}-${i}`}
+                                                        className="w-full"
+                                                        isStreaming={status === 'streaming'}
+                                                    >
+                                                        <ReasoningTrigger />
+                                                        <ReasoningContent>{part.text}</ReasoningContent>
+                                                    </Reasoning>
+                                                );
+                                            default:
+                                                return null;
+                                        }
+                                    })}
+                                </MessageContent>
+                            </Message>
+                        </div>
+                    ))}
+                    {status === 'submitted' && <Loader />}
+                </div>
+            </div>
+
+            {/* Sticky Footer Input */}
+            <div className="fixed bottom-0 left-0 right-0 p-1 sm:p-1 z-50 shadow-lg">
+                <div className="max-w-4xl mx-auto px-1">
+                    <PromptInputComponent
+                        handleSubmit={handleSubmit}
+                        setInput={setInput}
+                        input={input}
+                        setModel={setModel}
+                        model={model}
+                        models={models}
+                        status={status}
+                        webSearch={webSearch}
+                        setWebSearch={setWebSearch}
+                    />
+                </div>
             </div>
         </div>
     );
