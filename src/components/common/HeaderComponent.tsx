@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import {
     SidebarTrigger
 } from "@/components/ui/sidebar"
+import Logo from "./Logo"
 
 export default function HeaderComponent({ title }: { title?: string }) {
     return (
@@ -24,7 +25,7 @@ export default function HeaderComponent({ title }: { title?: string }) {
                         <BreadcrumbList>
                             <BreadcrumbItem>
                                 <BreadcrumbPage className="line-clamp-1">
-                                    {title || "Chat"}
+                                    {title || <Logo />}
                                 </BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
