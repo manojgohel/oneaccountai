@@ -13,8 +13,8 @@ import {
 export default function HeaderComponent({ title }: { title?: string }) {
     return (
         <>
-            <header className="flex h-14 shrink-0 items-center gap-2">
-                <div className="flex flex-1 items-center gap-2 px-3">
+            <header className="sticky bottom-0 flex shrink-0 items-center gap-2">
+                <div className="flex flex-1 items-center gap-2 px-1">
                     <SidebarTrigger className="cursor-pointer" />
                     <Separator
                         orientation="vertical"

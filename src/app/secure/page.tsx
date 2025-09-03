@@ -17,7 +17,7 @@ export default async function SecurePage() {
   return (
     <>
       <HeaderComponent title="One Account AI" />
-      <div className="flex flex-1 flex-col gap-4 px-4 py-10">
+      <div className="flex-1 overflow-y-auto">
         <ChatComponent models={models} />
       </div>
     </>

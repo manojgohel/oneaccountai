@@ -1,21 +1,13 @@
 "use client"
 
 import {
-  ArrowDown,
-  ArrowUp,
   Bell,
-  Copy,
-  CornerUpLeft,
-  CornerUpRight,
-  FileText,
+  DollarSign,
   GalleryVerticalEnd,
   LineChart,
-  Link,
-  MoreHorizontal,
-  Settings2,
-  Star,
-  Trash,
-  Trash2,
+  LogOut,
+  User2,
+  User2Icon
 } from "lucide-react"
 import * as React from "react"
 
@@ -34,52 +26,27 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { ModeToggleComponent } from "./common/ModeToggleComponent"
 
 const data = [
   [
     {
-      label: "Customize Page",
-      icon: Settings2,
+      label: "Manoj Gohel",
+      icon: User2Icon,
     },
     {
-      label: "Turn into wiki",
-      icon: FileText,
+      label: "Upgrade to Pro",
+      icon: DollarSign,
     },
   ],
   [
-    {
-      label: "Copy Link",
-      icon: Link,
-    },
-    {
-      label: "Duplicate",
-      icon: Copy,
-    },
-    {
-      label: "Move to",
-      icon: CornerUpRight,
-    },
-    {
-      label: "Move to Trash",
-      icon: Trash2,
-    },
-  ],
-  [
-    {
-      label: "Undo",
-      icon: CornerUpLeft,
-    },
     {
       label: "View analytics",
       icon: LineChart,
     },
     {
-      label: "Version History",
+      label: "History",
       icon: GalleryVerticalEnd,
-    },
-    {
-      label: "Show delete pages",
-      icon: Trash,
     },
     {
       label: "Notifications",
@@ -88,12 +55,8 @@ const data = [
   ],
   [
     {
-      label: "Import",
-      icon: ArrowUp,
-    },
-    {
-      label: "Export",
-      icon: ArrowDown,
+      label: "Logout",
+      icon: LogOut,
     },
   ],
 ]
@@ -103,12 +66,7 @@ export function NavActions() {
 
   return (
     <div className="flex items-center gap-2 text-sm">
-      <div className="text-muted-foreground hidden font-medium md:inline-block">
-        Edit Oct 08
-      </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7">
-        <Star />
-      </Button>
+      <ModeToggleComponent />
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -116,7 +74,7 @@ export function NavActions() {
             size="icon"
             className="cursor-pointer data-[state=open]:bg-accent h-7 w-7"
           >
-            <MoreHorizontal />
+            <User2 className="cursor-pointer" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -131,7 +89,7 @@ export function NavActions() {
                     <SidebarMenu>
                       {group.map((item, index) => (
                         <SidebarMenuItem key={index}>
-                          <SidebarMenuButton>
+                          <SidebarMenuButton className="cursor-pointer" >
                             <item.icon /> <span>{item.label}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
