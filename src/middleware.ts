@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Example: Protect routes starting with /dashboard
-    if (pathname.startsWith("/secure")) {
+    if (pathname.startsWith("/secure") || pathname.startsWith("/api")) {
         const token = request.cookies.get("session")?.value;
 
         if (!token) {
@@ -23,5 +23,5 @@ export function middleware(request: NextRequest) {
 
 // Apply middleware only to these routes
 export const config = {
-    matcher: ["/secure/:path*"],
+    matcher: ["/secure/:path*", "/api/:path*"],
 };
