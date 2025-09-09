@@ -3,6 +3,7 @@
 import {
   ArrowUpRight,
   Edit2,
+  MessageCircle,
   MoreHorizontal,
   Share,
   Trash2
@@ -24,14 +25,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import Link from "next/link"
 
 export function NavFavorites({
   favorites,
 }: {
   favorites: {
+    _id: string
     name: string
-    url: string
-    emoji: string
   }[]
 }) {
   const { isMobile } = useSidebar()
@@ -43,10 +44,10 @@ export function NavFavorites({
         {favorites.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <a href={item.url} title={item.name}>
-                <span>{item.emoji}</span>
+              <Link href={`/secure/${item._id}`} title={item.name}>
+                <span><MessageCircle size={16} /></span>
                 <span>{item.name}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

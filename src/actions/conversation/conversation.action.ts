@@ -1,3 +1,4 @@
+"use server";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import deepClone from "@/lib/deepClone";
 import dbConnect from "@/lib/mongoose";
@@ -5,11 +6,17 @@ import Conversation from "@/models/Conversation";
 import { objectId } from "@/utils/common";
 import { cookies } from "next/headers";
 
-export async function createConversation({ userId, name, messages = [] }: any) {
+export async function createConversation({ name, messages = [] }: any) {
     try {
         // Connect to database
         await dbConnect();
+        const cookiesStore = await cookies();
+        const userId = cookiesStore.get('_id')?.value;
 
+        const existingConversation = await Conversation.findOne({ userId, messages: { $size: 0 } });
+        if (existingConversation) {
+            return deepClone(existingConversation._id);
+        }
         // Create new conversation
         const newConversation = new Conversation({
             userId,
@@ -34,27 +41,57 @@ export async function saveConversation({ id, content, userId }: any) {
         await dbConnect();
         const tokenUsage = content?.totalUsage || null;
         const model = content?.model || null;
+
+        // Parse the model to extract provider and model name
+        // let providerModel = model;
+        // let modelVariant = '';
+
+        // if (model) {
+        //     // Check if model has a variant (like "openai/gpt-4-mini" -> provider: "openai/gpt-4", variant: "mini")
+        //     const parts = model.split('-');
+        //     if (parts.length > 1) {
+        //         // Extract the last part as variant if it looks like a variant
+        //         const lastPart = parts[parts.length - 1];
+        //         if (lastPart.match(/^(mini|turbo|instruct|preview|vision|\d+[kbm]?)$/i)) {
+        //             modelVariant = lastPart;
+        //             providerModel = parts.slice(0, -1).join('-');
+        //         } else {
+        //             modelVariant = 'default';
+        //         }
+        //     } else {
+        //         modelVariant = 'default';
+        //     }
+        // }
+
+        // Build the update object
+        const updateFields: any = {
+            model: model,
+            $push: { messages: content },
+            $inc: {
+                'tokenUsage.inputTokens': tokenUsage?.inputTokens || 0,
+                'tokenUsage.outputTokens': tokenUsage?.outputTokens || 0,
+                'tokenUsage.totalTokens': tokenUsage?.totalTokens || 0,
+                'tokenUsage.reasoningTokens': tokenUsage?.reasoningTokens || 0,
+                'tokenUsage.cachedInputTokens': tokenUsage?.cachedInputTokens || 0,
+            }
+        };
+
+        // Add tokenUsageByModel increments if model exists
+        if (model && tokenUsage) {
+            updateFields.$inc = {
+                ...updateFields.$inc,
+                [`tokenUsageByModel.${model}.inputTokens`]: tokenUsage?.inputTokens || 0,
+                [`tokenUsageByModel.${model}.outputTokens`]: tokenUsage?.outputTokens || 0,
+                [`tokenUsageByModel.${model}.totalTokens`]: tokenUsage?.totalTokens || 0,
+                [`tokenUsageByModel.${model}.reasoningTokens`]: tokenUsage?.reasoningTokens || 0,
+                [`tokenUsageByModel.${model}.cachedInputTokens`]: tokenUsage?.cachedInputTokens || 0,
+            };
+        }
+
         // Find the conversation by _id and userId, then push content to messages array
         const updatedConversation = await Conversation.findOneAndUpdate(
             { _id: objectId(id), userId }, // Find by both _id and userId
-            {
-                model: model,
-                $push: { messages: content },
-                $inc: {
-                    'tokenUsage.inputTokens': tokenUsage?.inputTokens || 0,
-                    'tokenUsage.outputTokens': tokenUsage?.outputTokens || 0,
-                    'tokenUsage.totalTokens': tokenUsage?.totalTokens || 0,
-                    'tokenUsage.reasoningTokens': tokenUsage?.reasoningTokens || 0,
-                    'tokenUsage.cachedInputTokens': tokenUsage?.cachedInputTokens || 0,
-                    ...(model ? {
-                        [`tokenUsageByModel.${model}.inputTokens`]: tokenUsage?.inputTokens || 0,
-                        [`tokenUsageByModel.${model}.outputTokens`]: tokenUsage?.outputTokens || 0,
-                        [`tokenUsageByModel.${model}.totalTokens`]: tokenUsage?.totalTokens || 0,
-                        [`tokenUsageByModel.${model}.reasoningTokens`]: tokenUsage?.reasoningTokens || 0,
-                        [`tokenUsageByModel.${model}.cachedInputTokens`]: tokenUsage?.cachedInputTokens || 0,
-                    } : {})
-                }
-            }, // Push content to messages array
+            updateFields,
             { new: true } // Return the updated document
         );
 
@@ -80,6 +117,57 @@ export async function getConversation(conversationId: string) {
         return { status: true, data: deepClone(conversations) };
     } catch (error) {
         console.error('Error fetching conversations:', error);
+        return { status: false, error: 'Failed to fetch conversations' };
+    }
+}
+
+export async function getConversations(lastId?: string, limit: number = 20) {
+    try {
+        const cookiesStore = await cookies();
+        const userId = cookiesStore.get('_id')?.value;
+        await dbConnect();
+
+        // Build the query
+        const matchQuery: any = { userId: objectId(userId) };
+
+        if (lastId) {
+            matchQuery._id = { $lt: objectId(lastId) };
+        }
+
+        const conversations = await Conversation.aggregate([
+            { $match: matchQuery },
+            {
+                $project: {
+                    name: 1,
+                    tokenUsage: 1,
+                    tokenUsageByModel: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    messageCount: { $size: { $ifNull: ["$messages", []] } },
+                    // Get first and last message timestamps if needed
+                    firstMessage: { $arrayElemAt: ["$messages", 0] },
+                    lastMessage: { $arrayElemAt: ["$messages", -1] }
+                }
+            },
+            { $sort: { _id: -1 } },
+            { $limit: limit }
+        ]);
+
+        const hasMore = conversations.length === limit;
+        const nextCursor = conversations.length > 0 ? conversations[conversations.length - 1]._id : null;
+
+        return {
+            conversations: deepClone(conversations),
+            pagination: {
+                hasMore,
+                nextCursor: nextCursor?.toString(),
+                limit,
+                returned: conversations.length
+
+            }
+        };
+    } catch (error) {
+        console.error('Error fetching conversations with stats:', error);
         return { status: false, error: 'Failed to fetch conversations' };
     }
 }

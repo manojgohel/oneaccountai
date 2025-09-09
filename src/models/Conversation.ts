@@ -10,11 +10,6 @@ const TokenUsageSchema = new Schema({
     cachedInputTokens: { type: Number, default: 0 }
 }, { _id: false });
 
-const TokenUsageByModelSchema = new Schema({
-    model: { type: String, required: true },
-    usage: { type: TokenUsageSchema, required: true }
-}, { _id: false });
-
 const ConversationSchema = new Schema<any>({
     userId: {
         type: Schema.Types.ObjectId,
@@ -34,8 +29,9 @@ const ConversationSchema = new Schema<any>({
         required: false
     },
     tokenUsageByModel: {
-        type: [Schema.Types.Mixed],
+        type: Schema.Types.Mixed, // Changed from Map to Mixed to allow nested structure
         required: false,
+        default: {}
     }
 }, {
     timestamps: true

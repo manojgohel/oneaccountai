@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import * as React from "react"
 
+import { getConversations } from "@/actions/conversation/conversation.action"
 import { NavFavorites } from "@/components/nav-favorites"
 import { NavMain } from "@/components/nav-main"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -18,6 +19,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { useQuery } from "@tanstack/react-query"
 
 // This is sample data.
 const data = {
@@ -31,7 +33,7 @@ const data = {
   navMain: [
     {
       title: "New Chat",
-      url: "#",
+      url: "/secure/new",
       icon: Sparkles,
     },
     {
@@ -52,71 +54,26 @@ const data = {
       badge: "10",
     },
   ],
-  conversations: [
-    {
-      name: "Project Management & Task Tracking",
-      url: "#",
-      emoji: "📊",
-    },
-    {
-      name: "Family Recipe Collection & Meal Planning",
-      url: "#",
-      emoji: "🍳",
-    },
-    {
-      name: "Fitness Tracker & Workout Routines",
-      url: "#",
-      emoji: "💪",
-    },
-    {
-      name: "Book Notes & Reading List",
-      url: "#",
-      emoji: "📚",
-    },
-    {
-      name: "Sustainable Gardening Tips & Plant Care",
-      url: "#",
-      emoji: "🌱",
-    },
-    {
-      name: "Language Learning Progress & Resources",
-      url: "#",
-      emoji: "🗣️",
-    },
-    {
-      name: "Home Renovation Ideas & Budget Tracker",
-      url: "#",
-      emoji: "🏠",
-    },
-    {
-      name: "Personal Finance & Investment Portfolio",
-      url: "#",
-      emoji: "💰",
-    },
-    {
-      name: "Movie & TV Show Watchlist with Reviews",
-      url: "#",
-      emoji: "🎬",
-    },
-    {
-      name: "Daily Habit Tracker & Goal Setting",
-      url: "#",
-      emoji: "✅",
-    },
-  ]
+  conversations: []
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { status, data: conversations } = useQuery({ queryKey: ['conversations'], queryFn: () => getConversations() });
+
   return (
-    <Sidebar className="border-r-0" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher />
-        <NavMain items={data.navMain} />
-      </SidebarHeader>
-      <SidebarContent>
-        <NavFavorites favorites={data.conversations} />
-      </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
+    <>
+      <Sidebar className="border-r-0" {...props}>
+        <SidebarHeader>
+          <TeamSwitcher />
+          <NavMain items={data.navMain} />
+        </SidebarHeader>
+        <SidebarContent>
+          {status === 'pending' && <div className="p-4 text-sm text-gray-500">Loading...</div>}
+          <NavFavorites favorites={conversations?.conversations || []} />
+        </SidebarContent>
+        <SidebarRail />
+      </Sidebar>
+    </>
+
   )
 }

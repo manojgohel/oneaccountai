@@ -45,6 +45,7 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
     const [input, setInput] = useState('');
     const [model, setModel] = useState<string>("openai/gpt-4.1-mini");
     const [webSearch, setWebSearch] = useState(false);
+    const [tokenPopoverOpen, setTokenPopoverOpen] = useState<Record<string, boolean>>({});
 
     // State for message interactions
     const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
@@ -195,72 +196,74 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
                                                         {message.role === 'assistant' && (
                                                             <>
                                                                 <Actions className={cn(
-                                                                    "mt-2 transition-opacity duration-200",
-                                                                    isLastMessage ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                                                    "mt-2 transition-opacity duration-200 group-hover:opacity-100",
+                                                                    isLastMessage ? "opacity-100" : "opacity-0 "
                                                                 )}>
-                                                                    <div className="flex items-center justify-between w-full">
-                                                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                                                            <Action
-                                                                                className='cursor-pointer'
-                                                                                onClick={() => regenerate()}
-                                                                                tooltip="Retry"
-                                                                                label="Retry"
-                                                                                disabled={!isLastMessage || status === 'streaming'}
-                                                                            >
-                                                                                <RefreshCcwIcon className="size-3" />
-                                                                            </Action>
-                                                                            <Action
-                                                                                className='cursor-pointer'
-                                                                                onClick={() => handleCopy(part.text)}
-                                                                                tooltip="Copy"
-                                                                                label="Copy"
-                                                                            >
-                                                                                <CopyIcon className="size-3" />
-                                                                            </Action>
-                                                                            <Action
-                                                                                className='cursor-pointer'
-                                                                                onClick={() => handleLike(message.id)}
-                                                                                tooltip="Like"
-                                                                                label="Like"
-                                                                                variant={likedMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                            >
-                                                                                <ThumbsUpIcon className="size-3" />
-                                                                            </Action>
-                                                                            <Action
-                                                                                className='cursor-pointer'
-                                                                                onClick={() => handleDislike(message.id)}
-                                                                                tooltip="Dislike"
-                                                                                label="Dislike"
-                                                                                variant={dislikedMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                            >
-                                                                                <ThumbsDownIcon className="size-3" />
-                                                                            </Action>
-                                                                            <Action
-                                                                                className='cursor-pointer'
-                                                                                onClick={() => handleShare(part.text)}
-                                                                                tooltip="Share"
-                                                                                label="Share"
-                                                                            >
-                                                                                <ShareIcon className="size-3" />
-                                                                            </Action>
-                                                                            <Action
-                                                                                className='cursor-pointer'
-                                                                                onClick={() => handleFavorite(message.id)}
-                                                                                tooltip="Favorite"
-                                                                                label="Favorite"
-                                                                                variant={favoriteMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                            >
-                                                                                <HeartIcon className="size-3" />
-                                                                            </Action>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                                                            {/* Token Usage Display */}
-                                                                            <TokenUsesComponent totalUsage={(message as any).totalUsage} />
-                                                                        </div>
-                                                                    </div>
+                                                                    <Action
+                                                                        className='cursor-pointer'
+                                                                        onClick={() => regenerate()}
+                                                                        tooltip="Retry"
+                                                                        label="Retry"
+                                                                        disabled={!isLastMessage || status === 'streaming'}
+                                                                    >
+                                                                        <RefreshCcwIcon className="size-3" />
+                                                                    </Action>
+                                                                    <Action
+                                                                        className='cursor-pointer'
+                                                                        onClick={() => handleCopy(part.text)}
+                                                                        tooltip="Copy"
+                                                                        label="Copy"
+                                                                    >
+                                                                        <CopyIcon className="size-3" />
+                                                                    </Action>
+                                                                    <Action
+                                                                        className='cursor-pointer'
+                                                                        onClick={() => handleLike(message.id)}
+                                                                        tooltip="Like"
+                                                                        label="Like"
+                                                                        variant={likedMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                    >
+                                                                        <ThumbsUpIcon className="size-3" />
+                                                                    </Action>
+                                                                    <Action
+                                                                        className='cursor-pointer'
+                                                                        onClick={() => handleDislike(message.id)}
+                                                                        tooltip="Dislike"
+                                                                        label="Dislike"
+                                                                        variant={dislikedMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                    >
+                                                                        <ThumbsDownIcon className="size-3" />
+                                                                    </Action>
+                                                                    <Action
+                                                                        className='cursor-pointer'
+                                                                        onClick={() => handleShare(part.text)}
+                                                                        tooltip="Share"
+                                                                        label="Share"
+                                                                    >
+                                                                        <ShareIcon className="size-3" />
+                                                                    </Action>
+                                                                    <Action
+                                                                        className='cursor-pointer'
+                                                                        onClick={() => handleFavorite(message.id)}
+                                                                        tooltip="Favorite"
+                                                                        label="Favorite"
+                                                                        variant={favoriteMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                    >
+                                                                        <HeartIcon className="size-3" />
+                                                                    </Action>
+                                                                    {/* Token Usage Display */}
+                                                                    <TokenUsesComponent
+                                                                        totalUsage={(message as any).totalUsage}
+                                                                        open={tokenPopoverOpen[message.id] || false}
+                                                                        onOpenChange={(open) => setTokenPopoverOpen(prev => ({
+                                                                            ...prev,
+                                                                            [message.id]: open
+                                                                        }))}
+                                                                    />
                                                                 </Actions>
                                                             </>
-                                                        )}
+                                                        )
+                                                        }
                                                     </div>
                                                 );
                                             case 'reasoning':
@@ -306,7 +309,7 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
                     />
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
