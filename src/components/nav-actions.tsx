@@ -31,7 +31,7 @@ import { ModeToggleComponent } from "./common/ModeToggleComponent"
 const data = [
   [
     {
-      label: "Manoj Gohel",
+      label: "User",
       icon: User2Icon,
     },
     {

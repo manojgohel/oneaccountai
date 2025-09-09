@@ -1,10 +1,7 @@
 "use client"
 
 import {
-  BugIcon,
   Command,
-  Search,
-  Settings,
   Sparkles
 } from "lucide-react"
 import * as React from "react"
@@ -37,22 +34,27 @@ const data = {
       icon: Sparkles,
     },
     {
-      title: "Search",
-      url: "#",
-      icon: Search,
+      title: "Dashboard",
+      url: "/secure",
+      icon: Command,
     },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
-      isActive: true,
-    },
-    {
-      title: "Developers",
-      url: "#",
-      icon: BugIcon,
-      badge: "10",
-    },
+    // {
+    //   title: "Search",
+    //   url: "#",
+    //   icon: Search,
+    // },
+    // {
+    //   title: "Settings",
+    //   url: "#",
+    //   icon: Settings,
+    //   isActive: true,
+    // },
+    // {
+    //   title: "Developers",
+    //   url: "#",
+    //   icon: BugIcon,
+    //   badge: "10",
+    // },
   ],
   conversations: []
 }
