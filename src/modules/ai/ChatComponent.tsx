@@ -37,8 +37,8 @@ interface ModelOption {
 
 interface ChatComponentProps {
     models: ModelOption[];
-    conversationId: string | null;
-    conversations: any;
+    conversationId?: string | null;
+    conversations?: any;
 }
 
 const ChatComponent = ({ models, conversationId, conversations }: ChatComponentProps) => {

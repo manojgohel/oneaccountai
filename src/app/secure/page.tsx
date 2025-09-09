@@ -1,6 +1,5 @@
 import getAiModels from "@/actions/ai/models";
 import HeaderComponent from "@/components/common/HeaderComponent";
-import ChatComponent from "@/modules/ai/ChatComponent";
 
 export default async function SecurePage() {
   const models = await getAiModels() || [
@@ -18,7 +17,7 @@ export default async function SecurePage() {
     <>
       <HeaderComponent />
       <div className="flex-1 overflow-y-auto">
-        <ChatComponent models={models} />
+        THis is secure page
       </div>
     </>
   )
