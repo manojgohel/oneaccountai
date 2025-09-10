@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { createContext, useContext, useState, type ReactNode } from "react";
 
@@ -6,6 +7,7 @@ type GlobalState = {
     user?: { name: string; email: string; model: string } | null;
     theme?: "light" | "dark";
     model?: string | null;
+    conversation?: any; // Define a proper type based on your conversation structure
     // ...add more as needed
 };
 

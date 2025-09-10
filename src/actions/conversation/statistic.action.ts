@@ -7,13 +7,11 @@ import { cookies } from "next/headers";
 
 // Get token usage for the last N days, grouped by day
 export async function getDailyTokenUsage(days = 7) {
-    const cookiesStore = await cookies();
-    const userId = cookiesStore.get("_id")?.value;
-
+    const userId = (await cookies()).get("_id")?.value;
     const today = new Date();
     const startDate = subDays(startOfDay(today), days - 1);
 
-    // Aggregate by day
+    // Add maxTimeMS to fail fast if the query is too slow
     const daily = await Conversation.aggregate([
         {
             $match: {
@@ -23,24 +21,18 @@ export async function getDailyTokenUsage(days = 7) {
         },
         {
             $group: {
-                _id: {
-                    $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
-                },
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
                 tokens: { $sum: "$tokenUsage.totalTokens" },
             },
         },
         { $sort: { _id: 1 } },
-    ]);
+    ]).option({ maxTimeMS: 5000 }); // 5 seconds timeout
 
-    // Fill missing days with 0
-    const result: { date: string; tokens: number }[] = [];
-    for (let i = 0; i < days; i++) {
-        const d = subDays(today, days - 1 - i);
-        const dateStr = d.toISOString().slice(0, 10);
-        const found = daily.find((x) => x._id === dateStr);
-        result.push({ date: dateStr, tokens: found ? found.tokens : 0 });
-    }
-    return result;
+    const map = Object.fromEntries(daily.map(d => [d._id, d.tokens]));
+    return Array.from({ length: days }, (_, i) => {
+        const d = subDays(today, days - 1 - i).toISOString().slice(0, 10);
+        return { date: d, tokens: map[d] || 0 };
+    });
 }
 
 // Helper to recursively sum totalTokens for a model

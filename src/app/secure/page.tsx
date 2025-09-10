@@ -11,7 +11,7 @@ export default async function SecurePage() {
 
   return (
     <>
-      <HeaderComponent />
+      <HeaderComponent title="Dashboard" description="Monitor your token usage and optimize your AI model performance." />
       <div className="flex flex-col gap-6 p-6">
         <h1 className="text-2xl font-bold">Token Usage Dashboard</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -47,7 +47,10 @@ export default async function SecurePage() {
               <CardTitle>Token Usage by AI Model</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div
+                className="space-y-3"
+                style={{ maxHeight: "13.5rem", overflowY: "auto" }} // ~4 items at 54px each
+              >
                 {aiModelUsage.map((item) => (
                   <div
                     key={item.model}

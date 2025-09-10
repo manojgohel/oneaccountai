@@ -34,6 +34,8 @@ const ConversationSchema = new Schema<any>({
         default: {}
     },
     model: { type: String, default: 'openai/gpt-4o-mini' },
+    systemPrompt: { type: String, default: '' },
+    reduceToken: { type: Boolean, default: false },
 }, {
     timestamps: true
 });

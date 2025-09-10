@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import SettingsPanel from '@/components/common/SettingsPanel';
 import {
     PromptInput,
     PromptInputButton,
@@ -11,8 +12,7 @@ import {
 } from '@/components/prompt-input';
 import {
     GlobeIcon,
-    Paperclip,
-    Settings
+    Paperclip
 } from 'lucide-react';
 
 
@@ -37,12 +37,7 @@ export default function PromptInputComponent({ handleSubmit, setInput, input, st
                     >
                         <GlobeIcon size={16} />
                     </PromptInputButton>
-                    <PromptInputButton
-                        variant={webSearch ? 'default' : 'ghost'}
-                        onClick={() => setWebSearch(!webSearch)}
-                    >
-                        <Settings size={16} />
-                    </PromptInputButton>
+                    <SettingsPanel />
                 </PromptInputTools>
                 <PromptInputSubmit disabled={!input} status={status} />
             </PromptInputToolbar>

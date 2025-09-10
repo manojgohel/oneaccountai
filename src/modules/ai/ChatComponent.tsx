@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
@@ -27,7 +28,7 @@ import {
     ThumbsDownIcon,
     ThumbsUpIcon
 } from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import PromptInputComponent from './PromptInputComponent';
 import TokenUsesComponent from './TokenUsesComponent';
 
@@ -41,7 +42,14 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     const [input, setInput] = useState('');
     const [webSearch, setWebSearch] = useState(false);
     const [tokenPopoverOpen, setTokenPopoverOpen] = useState<Record<string, boolean>>({});
-    const { state } = useGlobalContext();
+    const { state, setState } = useGlobalContext();
+
+    useEffect(() => {
+        if (conversations) {
+            const { messages, ...rest } = conversations;
+            setState((prev) => ({ ...prev, model: conversations.model, conversation: rest }));
+        }
+    }, [conversations?.model, setState]);
 
     // State for message interactions
     const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());

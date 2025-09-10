@@ -15,7 +15,7 @@ import { useGlobalContext } from "@/providers/context-provider";
 import { useEffect } from "react";
 import ModelSelection from "./ModelSelection";
 
-export default function HeaderComponent({ title, model }: { title?: string, model?: string }) {
+export default function HeaderComponent({ title, description, model }: { title?: string, description?: string, model?: string }) {
     const { setState } = useGlobalContext();
     useEffect(() => {
         if (model) {
@@ -35,7 +35,22 @@ export default function HeaderComponent({ title, model }: { title?: string, mode
                         <BreadcrumbList>
                             <BreadcrumbItem>
                                 <BreadcrumbPage className="line-clamp-1">
-                                    {title || <ModelSelection model={model} />}
+                                    {title ? <>
+                                        <div className="flex flex-col max-w-xs">
+                                            <div className="font-semibold text-xs text-neutral-900 dark:text-neutral-100 truncate whitespace-nowrap overflow-hidden max-w-xs">
+                                                {title}
+                                            </div>
+                                            {description &&
+                                                <div className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs overflow-hidden whitespace-nowrap">
+                                                    {description
+                                                        ?.split(" ")
+                                                        .slice(0, 5)
+                                                        .join(" ")}
+                                                    {description && description.split(" ").length > 15 ? "..." : ""}
+                                                </div>
+                                            }
+                                        </div>
+                                    </> : <ModelSelection model={model} />}
                                 </BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>

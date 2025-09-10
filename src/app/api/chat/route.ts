@@ -1,3 +1,4 @@
+import { getConversation } from '@/actions/conversation/conversation.action';
 import { convertToModelMessages, streamText, UIMessage } from 'ai';
 import { nanoid } from 'nanoid';
 import { cookies } from 'next/headers';
@@ -15,11 +16,14 @@ export async function POST(req: Request) {
         webSearch = false,
         conversationId
     }: { messages: UIMessage[]; model: string; webSearch: boolean; conversationId: string | null } = await req.json();
-    console.log("🚀💡💡💡💡💡=====> ~ route.ts:18 ~ POST ~ model:", model);
-    const modelMessages = convertToModelMessages(messages)
+    const modelMessages = convertToModelMessages(messages);
+    const conversation = await getConversation(conversationId || '');
+    if (!conversationId || !conversation) {
+        return new Response('Conversation not found', { status: 404 });
+    }
     const result = streamText({
         model: webSearch ? 'openai/gpt-4.1' : model,
-        system: 'You are a helpful assistant.',
+        system: conversation?.data?.systemPrompt || 'You are a helpful assistant.',
         messages: modelMessages,
         async onFinish(response) {
             const { totalUsage, content } = response;
