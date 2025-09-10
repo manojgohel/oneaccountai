@@ -17,6 +17,7 @@ import {
     SourcesTrigger,
 } from '@/components/sources';
 import { cn } from '@/lib/utils';
+import { useGlobalContext } from '@/providers/context-provider';
 import { useChat } from '@ai-sdk/react';
 import {
     CopyIcon,
@@ -26,26 +27,21 @@ import {
     ThumbsDownIcon,
     ThumbsUpIcon
 } from 'lucide-react';
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import PromptInputComponent from './PromptInputComponent';
 import TokenUsesComponent from './TokenUsesComponent';
 
-interface ModelOption {
-    id: string;
-    name: string;
-}
 
 interface ChatComponentProps {
-    models: ModelOption[];
     conversationId?: string | null;
     conversations?: any;
 }
 
-const ChatComponent = ({ models, conversationId, conversations }: ChatComponentProps) => {
+const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) => {
     const [input, setInput] = useState('');
-    const [model, setModel] = useState<string>("openai/gpt-4.1-mini");
     const [webSearch, setWebSearch] = useState(false);
     const [tokenPopoverOpen, setTokenPopoverOpen] = useState<Record<string, boolean>>({});
+    const { state } = useGlobalContext();
 
     // State for message interactions
     const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
@@ -53,6 +49,34 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
     const [favoriteMessages, setFavoriteMessages] = useState<Set<string>>(new Set());
 
     const { messages, sendMessage, status, regenerate } = useChat({ messages: conversations?.messages || [] });
+
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+    const [autoScroll, setAutoScroll] = useState(true);
+
+    // Track if user is at bottom before messages update
+    useLayoutEffect(() => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        // If user is within 100px of bottom, enable auto-scroll
+        setAutoScroll(scrollHeight - scrollTop - clientHeight < 100);
+    }, [messages.length]); // Only when messages count changes
+
+    // Scroll to bottom if autoScroll is true
+    useLayoutEffect(() => {
+        if (autoScroll && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages.length, autoScroll]);
+
+    // Update autoScroll on user scroll
+    const handleScroll = () => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        setAutoScroll(scrollHeight - scrollTop - clientHeight < 100);
+    };
 
     // Action handlers
     const handleCopy = async (text: string) => {
@@ -134,7 +158,7 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
                 { text: input },
                 {
                     body: {
-                        model: model,
+                        model: state?.model || "openai/gpt-4.1-mini",
                         webSearch: webSearch,
                         conversationId
                     },
@@ -155,7 +179,12 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
                 </div>
             )}
             {/* Messages Container */}
-            <div className="flex-1 p-1">
+            <div
+                className="flex-1 min-h-0 p-1" // <-- add min-h-0 here!
+                ref={messagesContainerRef}
+                onScroll={handleScroll}
+                style={{ overflowY: 'auto' }}
+            >
                 <div className="max-w-6xl mx-auto px-1">
                     {/* messages */}
                     {messages && messages.map((message, messageIndex) => (
@@ -183,7 +212,7 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
                                     </Sources>
                                 )}
                             <Message from={message.role} key={message.id}>
-                                <MessageContent>
+                                <MessageContent key={`${message.id}-content`}>
                                     {message.parts.map((part: any, i: number) => {
                                         const isLastMessage = messageIndex === messages.length - 1;
                                         switch (part.type) {
@@ -271,7 +300,7 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
                                                     <>
                                                         {status === 'streaming' && part.text &&
                                                             <Reasoning
-                                                                key={`${message.id}-${i}`}
+                                                                key={`${message.id}-reasoning`}
                                                                 className="w-full"
                                                                 isStreaming={status === 'streaming'}
                                                             >
@@ -290,6 +319,7 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
                         </div>
                     ))}
                     {status === 'submitted' && <Loader />}
+                    <div ref={messagesEndRef} />
                 </div>
             </div>
 
@@ -300,9 +330,6 @@ const ChatComponent = ({ models, conversationId, conversations }: ChatComponentP
                         handleSubmit={handleSubmit}
                         setInput={setInput}
                         input={input}
-                        setModel={setModel}
-                        model={model}
-                        models={models}
                         status={status}
                         webSearch={webSearch}
                         setWebSearch={setWebSearch}

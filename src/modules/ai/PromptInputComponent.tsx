@@ -4,23 +4,19 @@
 import {
     PromptInput,
     PromptInputButton,
-    PromptInputModelSelect,
-    PromptInputModelSelectContent,
-    PromptInputModelSelectItem,
-    PromptInputModelSelectTrigger,
-    PromptInputModelSelectValue,
     PromptInputSubmit,
     PromptInputTextarea,
     PromptInputToolbar,
-    PromptInputTools,
+    PromptInputTools
 } from '@/components/prompt-input';
 import {
     GlobeIcon,
-    Paperclip
+    Paperclip,
+    Settings
 } from 'lucide-react';
 
 
-export default function PromptInputComponent({ handleSubmit, setInput, input, setModel, model, models, status, webSearch, setWebSearch }: any) {
+export default function PromptInputComponent({ handleSubmit, setInput, input, status, webSearch, setWebSearch }: any) {
     return <>
         <PromptInput onSubmit={handleSubmit} className="w-full mx-auto">
             <PromptInputTextarea
@@ -40,25 +36,13 @@ export default function PromptInputComponent({ handleSubmit, setInput, input, se
                         onClick={() => setWebSearch(!webSearch)}
                     >
                         <GlobeIcon size={16} />
-                        <span>Search</span>
                     </PromptInputButton>
-                    <PromptInputModelSelect
-                        onValueChange={(value) => {
-                            setModel(value);
-                        }}
-                        value={model}
+                    <PromptInputButton
+                        variant={webSearch ? 'default' : 'ghost'}
+                        onClick={() => setWebSearch(!webSearch)}
                     >
-                        <PromptInputModelSelectTrigger>
-                            <PromptInputModelSelectValue />
-                        </PromptInputModelSelectTrigger>
-                        <PromptInputModelSelectContent>
-                            {models.map((model: any) => (
-                                <PromptInputModelSelectItem key={model.id} value={model.id}>
-                                    {model.name}
-                                </PromptInputModelSelectItem>
-                            ))}
-                        </PromptInputModelSelectContent>
-                    </PromptInputModelSelect>
+                        <Settings size={16} />
+                    </PromptInputButton>
                 </PromptInputTools>
                 <PromptInputSubmit disabled={!input} status={status} />
             </PromptInputToolbar>

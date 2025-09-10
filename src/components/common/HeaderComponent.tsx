@@ -1,17 +1,27 @@
-import { NavActions } from "@/components/nav-actions"
+"use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NavActions } from "@/components/nav-actions";
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
     SidebarTrigger
-} from "@/components/ui/sidebar"
-import ModelSelection from "./ModelSelection"
+} from "@/components/ui/sidebar";
+import { useGlobalContext } from "@/providers/context-provider";
+import { useEffect } from "react";
+import ModelSelection from "./ModelSelection";
 
-export default function HeaderComponent({ title }: { title?: string }) {
+export default function HeaderComponent({ title, model }: { title?: string, model?: string }) {
+    const { setState } = useGlobalContext();
+    useEffect(() => {
+        if (model) {
+            setState((prev: any) => ({ ...prev, model }));
+        }
+    }, [model, setState]);
     return (
         <>
             <header className="sticky bottom-0 flex shrink-0 items-center gap-2 px-2 py-2 shadow-lg  z-10 border-t">
@@ -25,7 +35,7 @@ export default function HeaderComponent({ title }: { title?: string }) {
                         <BreadcrumbList>
                             <BreadcrumbItem>
                                 <BreadcrumbPage className="line-clamp-1">
-                                    {title || <ModelSelection />}
+                                    {title || <ModelSelection model={model} />}
                                 </BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>

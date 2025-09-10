@@ -15,6 +15,7 @@ export async function POST(req: Request) {
         webSearch = false,
         conversationId
     }: { messages: UIMessage[]; model: string; webSearch: boolean; conversationId: string | null } = await req.json();
+    console.log("🚀💡💡💡💡💡=====> ~ route.ts:18 ~ POST ~ model:", model);
     const modelMessages = convertToModelMessages(messages)
     const result = streamText({
         model: webSearch ? 'openai/gpt-4.1' : model,

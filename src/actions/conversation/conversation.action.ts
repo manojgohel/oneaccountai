@@ -171,3 +171,26 @@ export async function getConversations(lastId?: string, limit: number = 20) {
         return { status: false, error: 'Failed to fetch conversations' };
     }
 }
+
+export async function updateConversation(conversationId: string, updateFields: any) {
+    try {
+        await dbConnect();
+        const cookiesStore = await cookies();
+        const userId = cookiesStore.get('_id')?.value;
+
+        const updatedConversation = await Conversation.findOneAndUpdate(
+            { _id: objectId(conversationId), userId: objectId(userId) },
+            updateFields,
+            { new: true }
+        );
+
+        if (!updatedConversation) {
+            return { status: false, error: 'Conversation not found or user not authorized' };
+        }
+
+        return { status: true, data: deepClone(updatedConversation) };
+    } catch (error) {
+        console.error('Error updating conversation:', error);
+        return { status: false, error: 'Failed to update conversation' };
+    }
+}

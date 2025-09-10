@@ -32,7 +32,8 @@ const ConversationSchema = new Schema<any>({
         type: Schema.Types.Mixed, // Changed from Map to Mixed to allow nested structure
         required: false,
         default: {}
-    }
+    },
+    model: { type: String, default: 'openai/gpt-4o-mini' },
 }, {
     timestamps: true
 });
