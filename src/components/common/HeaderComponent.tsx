@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import {
     SidebarTrigger
 } from "@/components/ui/sidebar"
-import Logo from "./Logo"
+import ModelSelection from "./ModelSelection"
 
 export default function HeaderComponent({ title }: { title?: string }) {
     return (
@@ -25,7 +25,7 @@ export default function HeaderComponent({ title }: { title?: string }) {
                         <BreadcrumbList>
                             <BreadcrumbItem>
                                 <BreadcrumbPage className="line-clamp-1">
-                                    {title || <Logo />}
+                                    {title || <ModelSelection />}
                                 </BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
