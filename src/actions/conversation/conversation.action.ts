@@ -194,3 +194,25 @@ export async function updateConversation(conversationId: string, updateFields: a
         return { status: false, error: 'Failed to update conversation' };
     }
 }
+
+export async function deleteConversation(conversationId: string) {
+    try {
+        await dbConnect();
+        const cookiesStore = await cookies();
+        const userId = cookiesStore.get('_id')?.value;
+
+        const result = await Conversation.deleteOne({
+            _id: objectId(conversationId),
+            userId: objectId(userId)
+        });
+
+        if (result.deletedCount === 0) {
+            return { status: false, error: 'Conversation not found or user not authorized' };
+        }
+
+        return { status: true };
+    } catch (error) {
+        console.error('Error deleting conversation:', error);
+        return { status: false, error: 'Failed to delete conversation' };
+    }
+}

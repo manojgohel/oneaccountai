@@ -18,7 +18,7 @@ export default async function SecurePage({ params }: any) {
 
   return (
     <>
-      <HeaderComponent model={conversations?.data?.model} />
+      <HeaderComponent model={conversations?.data?.model} description={conversations?.data?.name} />
       <div className="flex-1 overflow-y-auto">
         <ChatComponent conversationId={conversationId} conversations={conversations?.data} />
       </div>

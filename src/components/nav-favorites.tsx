@@ -1,14 +1,13 @@
 "use client"
 
 import {
-  ArrowUpRight,
   Edit2,
   MessageCircle,
   MoreHorizontal,
-  Share,
   Trash2
 } from "lucide-react"
 
+import { deleteConversation } from "@/actions/conversation/conversation.action"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +24,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 
 export function NavFavorites({
@@ -35,7 +35,21 @@ export function NavFavorites({
     name: string
   }[]
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
+
+  const queryClient = useQueryClient();
+  const { mutate: handleDeleteConversation, status: deleteStatus } = useMutation({
+    mutationFn: (id: string) => deleteConversation(id),
+    onSuccess: () => {
+      // Optionally refetch or update local state here
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+    onError: (error) => {
+      // Optionally handle error here
+      console.error(error);
+    },
+  });
+
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -65,7 +79,7 @@ export function NavFavorites({
                   <Edit2 className=" text-muted-foreground" />
                   <span>Rename</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {/* <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer">
                   <Share className=" text-muted-foreground" />
                   <span>Share</span>
@@ -73,11 +87,11 @@ export function NavFavorites({
                 <DropdownMenuItem className="cursor-pointer">
                   <ArrowUpRight className="text-muted-foreground" />
                   <span>Archive</span>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
-                  <Trash2 className=" text-muted-foreground" />
-                  <span>Delete</span>
+                <DropdownMenuItem disabled={deleteStatus === "pending"} onClick={() => handleDeleteConversation(item?._id)} className="cursor-pointer text-orange-700">
+                  <Trash2 className=" text-orange-700" />
+                  <span className="text-orange-700">Delete</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

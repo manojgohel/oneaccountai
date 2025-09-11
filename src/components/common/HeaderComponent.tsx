@@ -50,7 +50,7 @@ export default function HeaderComponent({ title, description, model }: { title?:
                                                 </div>
                                             }
                                         </div>
-                                    </> : <ModelSelection model={model} />}
+                                    </> : <ModelSelection model={model} description={description} />}
                                 </BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>

@@ -47,7 +47,7 @@ import {
 //     },
 // ];
 
-export default function ModelSelection({ model }: { model?: string }) {
+export default function ModelSelection({ model, description }: { model?: string, description?: string }) {
     const [selectedModel, setSelectedModel] = React.useState(model || "openai/gpt-4o-mini");
     const [search, setSearch] = React.useState("");
     const [models, setModels] = React.useState<Array<any>>([]);
@@ -119,17 +119,22 @@ export default function ModelSelection({ model }: { model?: string }) {
                         <button
                             type="button"
                             className="text-left cursor-pointer bg-transparent border-0 p-0"
+                            disabled={status === 'pending'}
                         >
                             <div className="flex flex-col max-w-xs">
                                 <div className="font-semibold text-xs text-neutral-900 dark:text-neutral-100 truncate whitespace-nowrap overflow-hidden max-w-xs">
-                                    {selected?.title}
+                                    {status === 'pending' ? (
+                                        <span>Loading models...</span>
+                                    ) : (
+                                        selected?.title
+                                    )}
                                 </div>
                                 <div className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs overflow-hidden whitespace-nowrap">
-                                    {selected?.description
+                                    {description
                                         ?.split(" ")
                                         .slice(0, 5)
                                         .join(" ")}
-                                    {selected?.description && selected.description.split(" ").length > 5 ? "..." : ""}
+                                    {description && description.split(" ").length > 5 ? "..." : ""}
                                 </div>
                             </div>
                         </button>
@@ -147,37 +152,39 @@ export default function ModelSelection({ model }: { model?: string }) {
                                 placeholder="Search models..."
                                 className="w-full px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-700 focus:outline-none"
                                 autoFocus
+                                disabled={status === 'pending'}
                             />
                         </div>
                         {/* Scrollable List */}
                         <div className="max-h-64 overflow-y-auto">
-                            {filteredModels.length === 0 && (
+                            {status === 'pending' ? (
+                                <div className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-sm">
+                                    Loading models...
+                                </div>
+                            ) : filteredModels.length === 0 ? (
                                 <div className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-sm">
                                     No models found.
                                 </div>
-                            )}
-                            {filteredModels.map((model) => (
-                                <DropdownMenuItem
-                                    key={model.value}
-                                    onSelect={handleModelSelect(model.value)}
-                                    className={`flex flex-col items-start gap-1 px-4 py-3 cursor-pointer transition-colors
+                            ) : (
+                                filteredModels.map((model) => (
+                                    <DropdownMenuItem
+                                        key={model.value}
+                                        onSelect={handleModelSelect(model.value)}
+                                        className={`flex flex-col items-start gap-1 px-4 py-3 cursor-pointer transition-colors
                                 ${selectedModel === model.value
-                                            ? "bg-neutral-100 dark:bg-neutral-800 font-semibold"
-                                            : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                                        }`}
-                                >
-                                    <span className="text-neutral-900 dark:text-neutral-100">{model.title}</span>
-                                    <span className="text-xs text-neutral-500 dark:text-neutral-400 text-justify">{model.description}</span>
-                                    <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
-                                        Input: {model.price.input} | Output: {model.price.output} | Thinking: {model.price.thinking} / 1M tokens
-                                    </div>
-                                </DropdownMenuItem>
-                            ))}
+                                                ? "bg-neutral-100 dark:bg-neutral-800 font-semibold"
+                                                : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                                            }`}
+                                    >
+                                        <span className="text-neutral-900 dark:text-neutral-100">{model.title}</span>
+                                        <span className="text-xs text-neutral-500 dark:text-neutral-400 text-justify">{model.description}</span>
+                                        <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
+                                            Input: {model.price.input} | Output: {model.price.output} | Thinking: {model.price.thinking} / 1M tokens
+                                        </div>
+                                    </DropdownMenuItem>
+                                ))
+                            )}
                         </div>
-                        {/* Sticky Footer Example */}
-                        {/* <div className="p-2 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 sticky bottom-0 z-10">
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400">Footer content here</span>
-                </div> */}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
