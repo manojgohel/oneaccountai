@@ -23,5 +23,5 @@ export function middleware(request: NextRequest) {
 
 // Apply middleware only to these routes
 export const config = {
-    matcher: ["/secure/:path*", "/api/:path*"],
+    matcher: ["/secure/:path*", "/api/secure/:path*"],
 };

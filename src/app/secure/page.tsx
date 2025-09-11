@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import WalletComponent from "./WalletComponent";
 
 export default async function SecurePage() {
   const dailyTokenUsage = await getDailyTokenUsage(3);
@@ -14,6 +15,7 @@ export default async function SecurePage() {
       <HeaderComponent title="Dashboard" description="Monitor your token usage and optimize your AI model performance." />
       <div className="flex flex-col gap-6 p-6">
         <h1 className="text-2xl font-bold">Token Usage Dashboard</h1>
+        <WalletComponent />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Daily Token Usage Card */}
           <Card>

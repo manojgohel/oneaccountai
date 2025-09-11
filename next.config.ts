@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   env: {
     AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
     PRICE_X: process.env.PRICE_X,
+    DODO_PAYMENTS_API_KEY: process.env.DODO_PAYMENTS_API_KEY,
+    DODO_PAYMENTS_WEBHOOK_KEY: process.env.DODO_PAYMENTS_WEBHOOK_KEY,
+    DODO_PAYMENTS_RETURN_URL: process.env.DODO_PAYMENTS_RETURN_URL,
+    DODO_PAYMENTS_ENVIRONMENT: process.env.DODO_PAYMENTS_ENVIRONMENT,
   },
   eslint: {
     // Warning: This allows production builds to successfully complete even if

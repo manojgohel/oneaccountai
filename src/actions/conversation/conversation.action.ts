@@ -121,7 +121,7 @@ export async function getConversation(conversationId: string) {
     }
 }
 
-export async function getConversations(lastId?: string, limit: number = 20) {
+export async function getConversations(lastId?: string, limit: number = 100) {
     try {
         const cookiesStore = await cookies();
         const userId = cookiesStore.get('_id')?.value;

@@ -7,9 +7,10 @@ const UserSchema = new Schema(
     name: { type: String },
     email: { type: String, required: true, unique: true },
     mobile: { type: String }, // Keep mobile as optional field
-    standard: { type: String }, // Class/Grade
-    board: { type: String }, // Education Board
-    answerLanguage: { type: String, default: 'English' }, // Preferred answer language
+    balance: { type: Number, default: 0 },
+    lastDepositAt: { type: Date },
+    lastLoginAt: { type: Date },
+    lastDepositAmount: { type: Number, default: 0 },
     otp: { type: Number },
     otpExpireTime: { type: Date },
     status: { type: Boolean, default: false },

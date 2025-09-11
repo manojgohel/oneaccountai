@@ -293,7 +293,6 @@ export async function getCurrentUser(): Promise<UserResponse> {
       status: true,
       message: "User found",
       user,
-      isProfileComplete: !!(user?.standard && user?.board && user?.answerLanguage)
     });
 
   } catch (error: any) {
@@ -301,6 +300,73 @@ export async function getCurrentUser(): Promise<UserResponse> {
     return {
       status: false,
       message: "Failed to get user information",
+    };
+  }
+}
+
+
+/**
+ * Find user by email and return _id.
+ * If user does not exist, create a new user and return the new _id.
+ * @param email - User's email address
+ * @returns User _id if found or created, otherwise null
+ */
+export async function getFindByEmail(email: string): Promise<string | null> {
+  try {
+    await dbConnect();
+    let user = await User.findOne({ email }).select("_id");
+    if (!user) {
+      user = await User.create({ email, createdAt: new Date() });
+    }
+    return user ? user._id.toString() : null;
+  } catch (error: any) {
+    console.error("Error in getFindByEmail:", error);
+    return null;
+  }
+}
+
+/**
+ * Deposit balance and update deposit details by userId
+ * @param userId - User's ID
+ * @param amount - Amount to deposit
+ * @returns Response with deposit status and updated user info
+ */
+export async function depositBalanceByUserId(userId: string, amount: number): Promise<UserResponse> {
+  try {
+    await dbConnect();
+
+    if (!userId || typeof amount !== "number" || amount <= 0) {
+      return {
+        status: false,
+        message: "Invalid user ID or deposit amount.",
+      };
+    }
+
+    const user: any = await User.findById(userId);
+
+    if (!user) {
+      return {
+        status: false,
+        message: "User not found.",
+      };
+    }
+
+    user.balance = (user.balance || 0) + amount;
+    user.lastDepositAt = new Date();
+    user.lastDepositAmount = amount;
+    user.updatedAt = new Date();
+
+    await user.save();
+
+    return {
+      status: true,
+      message: "Deposit successful.",
+    };
+  } catch (error: any) {
+    console.error("Error in depositBalanceByUserId:", error);
+    return {
+      status: false,
+      message: "Failed to deposit balance. Please try again.",
     };
   }
 }
