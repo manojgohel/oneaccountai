@@ -43,7 +43,7 @@ function useDeposit() {
         "customization": {
             "theme": theme || "light",
         },
-        "return_url": "https://oneaccountai.com/checkout/order-complete",
+        "return_url": "https://oneaccountai.com/secure/checkout/order-complete",
     };
     console.log("🚀💡💡💡💡💡=====> ~ WalletComponent.tsx:54 ~ useDeposit ~ bodyPayload:", bodyPayload);
     return useMutation({
