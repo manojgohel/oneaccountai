@@ -351,7 +351,7 @@ export async function depositBalanceByUserId(userId: string, amount: number): Pr
       };
     }
 
-    user.balance = (user.balance || 0) + amount;
+    user.balance = Number(user.balance || 0) + Number(amount / 10000);
     user.lastDepositAt = new Date();
     user.lastDepositAmount = amount;
     user.updatedAt = new Date();

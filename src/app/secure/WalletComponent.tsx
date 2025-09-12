@@ -30,12 +30,15 @@ function useDeposit() {
         "product_cart": [
             {
                 "product_id": "pdt_JaSHimijvPTWxcZ3oxD2e",
-                "quantity": 1
+                "quantity": 1,
+                "paymentCurrency": "USD",
             }
         ],
+        "paymentCurrency": "USD",
         "customer": {
             "email": state.user?.email,
-            "name": state.user?.name || "Customer"
+            "name": state.user?.name || "Customer",
+            "paymentCurrency": "USD",
         },
         "feature_flags": {
             "allow_phone_number_collection": false

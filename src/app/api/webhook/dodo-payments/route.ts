@@ -7,6 +7,7 @@ import { Webhooks } from "@dodopayments/nextjs";
 export const POST = Webhooks({
     webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_KEY || "",
     onPayload: async (payload: any) => {
+        console.log("🚀💡💡💡💡💡=====> ~ route.ts:10 ~ payload:", payload);
         const userId: any = await getFindByEmail(payload.data.customer.email);
         if (userId) {
             await depositBalanceByUserId(userId, payload.data.total_amount);
