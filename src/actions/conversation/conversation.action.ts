@@ -216,3 +216,21 @@ export async function deleteConversation(conversationId: string) {
         return { status: false, error: 'Failed to delete conversation' };
     }
 }
+
+export async function getMostRecentlyUpdatedConversationId() {
+    try {
+        await dbConnect();
+        const cookiesStore = await cookies();
+        const userId = cookiesStore.get('_id')?.value;
+
+        const conversation = await Conversation.findOne({ userId: objectId(userId) })
+            .sort({ updatedAt: -1 })
+            .select('_id')
+            .lean();
+        const conversationClone = deepClone(conversation);
+        return conversationClone ? conversationClone._id : null;
+    } catch (error) {
+        console.error('Error fetching most recently updated conversation:', error);
+        return null;
+    }
+}

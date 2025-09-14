@@ -83,7 +83,7 @@ export async function createOrUpdateUser({ email }: CreateOrUpdateUserParams): P
     const emailResult: any = await sendEmail(
       email,
       'Your One Account AI OTP',
-      `Your One Account AI OTP is: ${newOTP}. This OTP is valid for 5 minutes. Please do not share this OTP with anyone.`
+      `Your One Account AI OTP is: ${newOTP}. This OTP is valid for 15 minutes. Please do not share this OTP with anyone.`
     );
     console.log("🚀💡💡💡💡💡=====> ~ user.action.ts:88 ~ createOrUpdateUser ~ emailResult:", emailResult);
 

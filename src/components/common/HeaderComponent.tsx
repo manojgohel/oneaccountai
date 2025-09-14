@@ -24,7 +24,7 @@ export default function HeaderComponent({ title, description, model }: { title?:
     }, [model, setState]);
     return (
         <>
-            <header className="sticky bottom-0 flex shrink-0 items-center gap-2 px-2 py-2 shadow-lg  z-10 border-t">
+            <header className="sticky bottom-0 flex shrink-0 items-center gap-2 px-2 py-2  z-10">
                 <div className="flex flex-1 items-center gap-2 px-1">
                     <SidebarTrigger className="cursor-pointer" />
                     <Separator
@@ -36,12 +36,12 @@ export default function HeaderComponent({ title, description, model }: { title?:
                             <BreadcrumbItem>
                                 <BreadcrumbPage className="line-clamp-1">
                                     {title ? <>
-                                        <div className="flex flex-col max-w-xs">
-                                            <div className="font-semibold text-xs text-neutral-900 dark:text-neutral-100 truncate whitespace-nowrap overflow-hidden max-w-xs">
+                                        <div className="flex flex-col">
+                                            <div className="font-semibold text-xs text-neutral-900 dark:text-neutral-100 truncate whitespace-nowrap overflow-hidden">
                                                 {title}
                                             </div>
                                             {description &&
-                                                <div className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs overflow-hidden whitespace-nowrap">
+                                                <div className="text-xs text-neutral-500 dark:text-neutral-400 overflow-hidden whitespace-nowrap">
                                                     {description
                                                         ?.split(" ")
                                                         .slice(0, 5)

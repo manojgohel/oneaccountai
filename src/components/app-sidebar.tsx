@@ -33,11 +33,6 @@ const data = {
       url: "/secure/new",
       icon: Sparkles,
     },
-    {
-      title: "Dashboard",
-      url: "/secure",
-      icon: Command,
-    },
     // {
     //   title: "Search",
     //   url: "#",

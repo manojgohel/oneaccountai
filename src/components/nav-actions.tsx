@@ -28,6 +28,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useGlobalContext } from "@/providers/context-provider";
+import { useRouter } from "next/navigation";
 import { ModeToggleComponent } from "./common/ModeToggleComponent";
 
 const data = [
@@ -35,16 +36,19 @@ const data = [
     {
       label: "Profile",
       icon: User2Icon,
+      link: "/secure/profile"
     },
     {
-      label: "Upgrade to Pro",
+      label: "Wallet or Uses Credits",
       icon: DollarSign,
+      link: "/secure/wallet"
     },
   ],
   [
     {
       label: "Logout",
       icon: LogOut,
+      link: "/secure/logout"
     },
   ],
 ]
@@ -52,7 +56,7 @@ const data = [
 export function NavActions() {
   const [isOpen, setIsOpen] = React.useState(false);
   const { setState } = useGlobalContext();
-
+  const router = useRouter();
   // React Query: get current user and set in global context
   const { data: userData, status } = useQuery({
     queryKey: ["currentUser"],
@@ -65,6 +69,10 @@ export function NavActions() {
       setState((prev) => ({ ...prev, user: userData.user }));
     }
   }, [userData]);
+
+  const handleClick = (link: string) => {
+    router.push(link);
+  }
 
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -103,7 +111,7 @@ export function NavActions() {
                     <SidebarMenu>
                       {group.map((item: any, index: number) => (
                         <SidebarMenuItem key={index}>
-                          <SidebarMenuButton className="cursor-pointer" >
+                          <SidebarMenuButton onClick={() => handleClick(item.link)} className="cursor-pointer" >
                             <item.icon /> <span>{item.label}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
