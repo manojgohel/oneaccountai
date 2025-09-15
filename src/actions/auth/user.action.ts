@@ -85,18 +85,17 @@ export async function createOrUpdateUser({ email }: CreateOrUpdateUserParams): P
       'Your One Account AI OTP',
       `Your One Account AI OTP is: ${newOTP}. This OTP is valid for 15 minutes. Please do not share this OTP with anyone.`
     );
-    console.log("🚀💡💡💡💡💡=====> ~ user.action.ts:88 ~ createOrUpdateUser ~ emailResult:", emailResult);
 
-    // if (!emailResult.status) {
-    //   return {
-    //     status: false,
-    //     message: "Failed to send OTP. Please try again.",
-    //   };
-    // }
+    if (!emailResult.status) {
+      return {
+        status: false,
+        message: "Failed to send OTP. Please try again.",
+      };
+    }
 
     return {
       status: true,
-      message: "OTP sent successfully to your email address" + newOTP,
+      message: "OTP sent successfully to your email address",
       email,
     };
 

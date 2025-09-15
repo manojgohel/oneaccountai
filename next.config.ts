@@ -10,11 +10,14 @@ const nextConfig: NextConfig = {
     DODO_PAYMENTS_RETURN_URL: process.env.DODO_PAYMENTS_RETURN_URL,
     DODO_PAYMENTS_ENVIRONMENT: process.env.DODO_PAYMENTS_ENVIRONMENT,
 
-    SMTP_HOST: process.env.SMTP_HOST || 'relay.mailbaby.net',
-    SMTP_PORT: process.env.SMTP_PORT || "587",
-    SMTP_USER: process.env.SMTP_USER || 'mb81358',
-    SMTP_PASS: process.env.SMTP_PASS || 'NN2pEAu6nzmKfXVyGJeP',
-    FROM_EMAIL: process.env.FROM_EMAIL || 'noreply@oneaccountai.com'
+    SMTP_HOST: process.env.SMTP_HOST,
+    SMTP_PORT: process.env.SMTP_PORT,
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASS: process.env.SMTP_PASS,
+    FROM_EMAIL: process.env.FROM_EMAIL,
+
+    MAILBABY_API_URL: process.env.MAILBABY_API_URL,
+    MAILBABY_API_KEY: process.env.MAILBABY_API_KEY,
   },
   eslint: {
     // Warning: This allows production builds to successfully complete even if

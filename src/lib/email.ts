@@ -1,11 +1,5 @@
-import nodemailer, { Transporter } from 'nodemailer';
-
-// Types for function parameters
-interface EmailParams {
-    email: string;
-    subject: string;
-    message: string;
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios from 'axios';
 
 interface EmailResponse {
     status: boolean;
@@ -14,26 +8,16 @@ interface EmailResponse {
     error?: string;
 }
 
-// SMTP transporter setup
-const port = Number(process.env.SMTP_PORT || 587);
-const secure = port === 465;
+const MAILBABY_API_URL = process.env.MAILBABY_API_URL || 'https://api.mailbaby.net/mail/send';
+const MAILBABY_API_KEY = process.env.MAILBABY_API_KEY;
+const DEFAULT_FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@oneaccountai.com';
 
-const transporter: Transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port,
-    secure: false,
-    auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    } : undefined,
-    pool: true, // use pooled connections
-    maxConnections: 5, // limit concurrent connections
-    maxMessages: 100, // limit messages per connection
-
-});
+function maskEmail(value: string) {
+    return value.replace(/(.{2}).*(@.*)/, '$1***$2');
+}
 
 /**
- * Send Email using SMTP
+ * Send Email using MailBaby API
  * @param email - Email address to send to
  * @param subject - Email subject
  * @param message - Email content to send
@@ -45,59 +29,82 @@ export default async function sendEmail(
     message: string
 ): Promise<EmailResponse> {
     try {
-        // Validate inputs
         if (!email || !message || !subject) {
             return {
                 status: false,
-                message: "Email, subject, and message are required",
-                error: "Missing required parameters"
+                message: 'Email, subject, and message are required',
+                error: 'Missing required parameters',
             };
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return {
                 status: false,
-                message: "Invalid email format",
-                error: "Invalid email format"
+                message: 'Invalid email format',
+                error: 'Invalid email format',
             };
         }
 
-        const from = process.env.FROM_EMAIL || 'noreply@oneaccountai.com';
+        if (!MAILBABY_API_KEY) {
+            return {
+                status: false,
+                message: 'Email service not configured',
+                error: 'Missing MAILBABY_API_KEY',
+            };
+        }
 
-        console.log("🚀 Sending email via SMTP:", {
-            to: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Mask email for security
-            subject: subject,
-            messageLength: message.length,
-            host: process.env.SMTP_HOST,
-            port,
-            secure,
-        });
+        const from = DEFAULT_FROM_EMAIL;
 
-        const info = await transporter.sendMail({
-            from,
-            to: email,
+        console.log('🚀 Sending email via MailBaby:', {
+            to: maskEmail(email),
             subject,
-            text: message,
-            html: `<p>${message}</p>`,
+            bodyLength: message.length,
+            url: MAILBABY_API_URL,
         });
 
-        console.log("✅ Email sent successfully! Message ID:", info.messageId);
+        const payload = {
+            to: email,
+            from,
+            subject,
+            body: message,
+        };
+
+        const res = await axios.post(MAILBABY_API_URL, payload, {
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': MAILBABY_API_KEY,
+            },
+            maxBodyLength: Infinity,
+            timeout: 15000,
+        });
+
+        const messageId =
+            (res.data && (res.data.id || res.data.messageId)) ||
+            res.headers?.['x-message-id'];
+
+        console.log('✅ Email sent via MailBaby:', { messageId, status: res.status });
 
         return {
             status: true,
-            message: "Email sent successfully",
-            messageId: info.messageId
+            message: 'Email sent successfully',
+            messageId,
         };
+    } catch (error: any) {
+        let errorMessage = 'Unknown error occurred';
+        if (error?.response) {
+            errorMessage = `${error.response.status}: ${JSON.stringify(error.response.data)}`;
+        } else if (error?.request) {
+            errorMessage = 'No response received from MailBaby';
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
+        }
 
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-        console.error("❌ Error sending email:", errorMessage);
+        console.error('❌ Error sending email via MailBaby:', errorMessage);
         return {
             status: false,
-            message: "Failed to send email",
-            error: errorMessage
+            message: 'Failed to send email',
+            error: errorMessage,
         };
     }
 }
@@ -107,11 +114,5 @@ export default async function sendEmail(
  * @returns boolean indicating if email service is configured
  */
 export function isEmailConfigured(): boolean {
-    const hasHost = !!process.env.SMTP_HOST;
-    const hasPort = !!process.env.SMTP_PORT;
-    const hasFrom = !!process.env.FROM_EMAIL;
-    const hasUser = !!process.env.SMTP_USER;
-    const hasPass = !!process.env.SMTP_PASS;
-    const authOk = (!hasUser && !hasPass) || (hasUser && hasPass);
-    return hasHost && hasPort && hasFrom && authOk;
+    return Boolean(MAILBABY_API_KEY && DEFAULT_FROM_EMAIL);
 }
