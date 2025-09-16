@@ -35,7 +35,7 @@ export function LoginForm({
         setMessage('');
 
         try {
-            const result = await createOrUpdateUser({ email });
+            const result = await createOrUpdateUser({ email: email.toLowerCase() });
 
             if (result.status) {
                 setStep('otp');
@@ -56,7 +56,7 @@ export function LoginForm({
         setError('');
 
         try {
-            const result = await verifyOTPAndLogin({ email, otp });
+            const result = await verifyOTPAndLogin({ email: email.toLowerCase(), otp });
 
             if (result.status) {
                 setMessage('Login successful! Redirecting...');
@@ -125,7 +125,7 @@ export function LoginForm({
                                     <Input
                                         id="email"
                                         type="email"
-                                        placeholder="m@example.com"
+                                        placeholder="me@example.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -148,21 +148,22 @@ export function LoginForm({
                                 <div className="flex flex-col gap-3">
                                     <Button
                                         type="submit"
-                                        className="w-full"
+                                        className="w-full cursor-pointer"
                                         disabled={isLoading || !email.trim()}
                                     >
                                         {isLoading ? 'Sending OTP...' : 'Send OTP'}
                                     </Button>
-                                    <Button variant="outline" className="w-full" type="button">
+                                    {/* <Button variant="outline" className="w-full" type="button">
                                         Login with Google
-                                    </Button>
+                                    </Button> */}
                                 </div>
                             </div>
-                            <div className="mt-4 text-center text-sm">
-                                Don&apos;t have an account?{" "}
+                            <div className="mt-4 text-center text-xs text-muted-foreground">
+                                By clicking Login, you accept all{" "}
                                 <a href="#" className="underline underline-offset-4">
-                                    Sign up with email
+                                    terms and conditions
                                 </a>
+                                .
                             </div>
                         </form>
                     ) : (
@@ -224,7 +225,7 @@ export function LoginForm({
                                 <div className="flex flex-col gap-3">
                                     <Button
                                         type="submit"
-                                        className="w-full"
+                                        className="w-full cursor-pointer"
                                         disabled={isLoading || otp.length !== 4}
                                     >
                                         {isLoading ? 'Verifying...' : 'Verify & Login'}

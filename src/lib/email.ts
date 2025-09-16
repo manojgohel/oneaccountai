@@ -56,6 +56,7 @@ export default async function sendEmail(
 
         const from = DEFAULT_FROM_EMAIL;
 
+
         console.log('🚀 Sending email via MailBaby:', {
             to: maskEmail(email),
             subject,

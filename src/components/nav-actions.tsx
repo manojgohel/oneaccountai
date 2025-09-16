@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-import { getCurrentUser } from "@/actions/auth/user.action";
+import { getCurrentUser, logout } from "@/actions/auth/user.action";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -70,7 +70,14 @@ export function NavActions() {
     }
   }, [userData]);
 
-  const handleClick = (link: string) => {
+  const handleClick = async (link: string) => {
+    if (link === "/secure/logout") {
+      // Handle logout logic here
+      await logout();
+      setState((prev) => ({ ...prev, user: null }));
+      router.push("/auth");
+      return;
+    }
     router.push(link);
   }
 

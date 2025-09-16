@@ -6,6 +6,7 @@ import sendEmail from "@/lib/email";
 import dbConnect from "@/lib/mongoose";
 import { createSessionOnly } from "@/lib/session";
 import User from "@/models/User";
+import generateOtpEmail from "@/utils/generateOtpEmail";
 
 // Type definitions
 interface CreateOrUpdateUserParams {
@@ -78,12 +79,13 @@ export async function createOrUpdateUser({ email }: CreateOrUpdateUserParams): P
     }
 
     await user.save();
+    const { html, subject } = generateOtpEmail(newOTP, 15);
 
     // Send OTP via email
     const emailResult: any = await sendEmail(
       email,
-      'Your One Account AI OTP',
-      `Your One Account AI OTP is: ${newOTP}. This OTP is valid for 15 minutes. Please do not share this OTP with anyone.`
+      subject,
+      html
     );
 
     if (!emailResult.status) {
