@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import { uploadToS3 } from '@/actions/upload.action';
 import { Action, Actions } from '@/components/actions';
 import { Loader } from '@/components/loader';
 import { Message, MessageContent } from '@/components/message';
@@ -21,14 +22,9 @@ import { cn } from '@/lib/utils';
 import { useGlobalContext } from '@/providers/context-provider';
 import { useChat } from '@ai-sdk/react';
 import {
-    CopyIcon,
-    HeartIcon,
-    RefreshCcwIcon,
-    ShareIcon,
-    ThumbsDownIcon,
-    ThumbsUpIcon
+    RefreshCcwIcon
 } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import PromptInputComponent from './PromptInputComponent';
 import TokenUsesComponent from './TokenUsesComponent';
 
@@ -51,129 +47,178 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
         }
     }, [conversations?.model, setState]);
 
-    // State for message interactions
+    // File upload state (from example)
+    const [selectedImages, setSelectedImages] = useState<string[]>([]);
+    const [isUploadingFile, setIsUploadingFile] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    // Message interactions
     const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
     const [dislikedMessages, setDislikedMessages] = useState<Set<string>>(new Set());
     const [favoriteMessages, setFavoriteMessages] = useState<Set<string>>(new Set());
 
-    const { messages, sendMessage, status, regenerate } = useChat({ messages: conversations?.messages || [] });
+    // Improved scroll handling (from example)
+    const chatContainerRef = useRef<HTMLDivElement | null>(null);
+    const shouldScrollRef = useRef(true);
 
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
-    const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-    const [autoScroll, setAutoScroll] = useState(true);
-
-    // Track if user is at bottom before messages update
-    useLayoutEffect(() => {
-        const container = messagesContainerRef.current;
-        if (!container) return;
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        // If user is within 100px of bottom, enable auto-scroll
-        setAutoScroll(scrollHeight - scrollTop - clientHeight < 100);
-    }, [messages.length]); // Only when messages count changes
-
-    // Scroll to bottom if autoScroll is true
-    useLayoutEffect(() => {
-        if (autoScroll && messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const { messages, sendMessage, status, regenerate, setMessages } = useChat({
+        messages: conversations?.messages || [],
+        onFinish: () => {
+            scrollToBottom();
         }
-    }, [messages.length, autoScroll]);
+    });
 
-    // Update autoScroll on user scroll
-    const handleScroll = () => {
-        const container = messagesContainerRef.current;
-        if (!container) return;
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        setAutoScroll(scrollHeight - scrollTop - clientHeight < 100);
+    // Improved auto-scroll to bottom
+    const scrollToBottom = useCallback(() => {
+        if (chatContainerRef.current && shouldScrollRef.current) {
+            const scrollElement = chatContainerRef.current;
+
+            // Use both scrollTop and scrollIntoView for better reliability
+            scrollElement.scrollTop = scrollElement.scrollHeight;
+
+            setTimeout(() => {
+                const lastMessage = scrollElement.lastElementChild?.lastElementChild;
+                if (lastMessage) {
+                    lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }
+            }, 50);
+        }
+    }, []);
+
+    // Enhanced auto-scroll when messages change
+    useEffect(() => {
+        if (messages.length > 0) {
+            setTimeout(() => scrollToBottom(), 50);
+            setTimeout(() => scrollToBottom(), 200);
+            setTimeout(() => scrollToBottom(), 500);
+        }
+    }, [messages, scrollToBottom]);
+
+    // Auto-scroll when status changes
+    useEffect(() => {
+        if ((status as any) === 'loading' || status === 'streaming') {
+            scrollToBottom();
+        }
+    }, [status, scrollToBottom]);
+
+    // Check if user is near bottom to decide whether to auto-scroll
+    const handleScroll = useCallback(() => {
+        if (chatContainerRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+            const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+            shouldScrollRef.current = isNearBottom;
+        }
+    }, []);
+
+    // Add/remove scroll listener
+    useEffect(() => {
+        const scrollElement = chatContainerRef.current;
+        if (scrollElement) {
+            scrollElement.addEventListener('scroll', handleScroll);
+            return () => scrollElement.removeEventListener('scroll', handleScroll);
+        }
+    }, [handleScroll]);
+
+    // File upload handlers (from example)
+    const handleImageSelect = () => {
+        fileInputRef.current?.click();
     };
 
-    // Action handlers
-    const handleCopy = async (text: string) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile: any = e.target.files?.[0];
+        if (!selectedFile) return;
+
         try {
-            await navigator.clipboard.writeText(text);
+            setIsUploadingFile(true);
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const result: any = await uploadToS3(formData);
+
+            if (result?.success && result.url) {
+                setSelectedImages(prev => [...prev, result.url]);
+            } else {
+                console.error('Failed to upload file');
+            }
         } catch (error) {
-            console.error('Failed to copy text:', error);
+            console.error('Error uploading file:', error);
+        } finally {
+            setIsUploadingFile(false);
+            // reset input so same file can be selected again
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
-    const handleShare = async (text: string) => {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'AI Chat Response',
-                    text: text,
-                });
-            } catch (error) {
-                console.error('Failed to share:', error);
-            }
-        } else {
-            // Fallback to copy
-            handleCopy(text);
-        }
+    const removeImage = (index: number) => {
+        setSelectedImages(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleLike = (messageId: string) => {
-        setLikedMessages(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(messageId)) {
-                newSet.delete(messageId);
-            } else {
-                newSet.add(messageId);
-                // Remove from disliked if it was disliked
-                setDislikedMessages(prevDisliked => {
-                    const newDislikedSet = new Set(prevDisliked);
-                    newDislikedSet.delete(messageId);
-                    return newDislikedSet;
-                });
-            }
-            return newSet;
-        });
-    };
-
-    const handleDislike = (messageId: string) => {
-        setDislikedMessages(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(messageId)) {
-                newSet.delete(messageId);
-            } else {
-                newSet.add(messageId);
-                // Remove from liked if it was liked
-                setLikedMessages(prevLiked => {
-                    const newLikedSet = new Set(prevLiked);
-                    newLikedSet.delete(messageId);
-                    return newLikedSet;
-                });
-            }
-            return newSet;
-        });
-    };
-
-    const handleFavorite = (messageId: string) => {
-        setFavoriteMessages(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(messageId)) {
-                newSet.delete(messageId);
-            } else {
-                newSet.add(messageId);
-            }
-            return newSet;
-        });
-    };
-
+    // Submit with images included (immediate display + send)
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.trim()) {
+        const trimmed = input.trim();
+        if (!trimmed && selectedImages.length === 0) return;
+
+        // Ensure auto-scroll will happen for new messages
+        shouldScrollRef.current = true;
+
+        if (selectedImages.length > 0) {
+            // Build parts for immediate display
+            const parts: any[] = [];
+            if (trimmed) {
+                parts.push({ type: 'text', text: trimmed });
+            }
+            selectedImages.forEach((file) => {
+                parts.push({ type: 'image', image: `http://oneaccountai.com/api/file/${file}` });
+            });
+
+            const userMessageWithImages = {
+                id: `user-${Date.now()}`,
+                role: 'user' as const,
+                content: trimmed,
+                createdAt: new Date(),
+                parts
+            };
+            console.log("🚀💡💡💡💡💡=====> ~ ChatComponent.tsx:187 ~ handleSubmit ~ userMessageWithImages:", userMessageWithImages);
+
+            // Show immediately
+            setMessages((prev) => [...prev, userMessageWithImages]);
+
+            // Scroll down shortly after adding
+            setTimeout(() => scrollToBottom(), 50);
+
+            // Send to API
             sendMessage(
-                { text: input },
+                { text: trimmed },
                 {
                     body: {
-                        model: state?.model || "openai/gpt-4.1-mini",
-                        webSearch: webSearch,
-                        conversationId
+                        model: state?.model || 'openai/gpt-4.1-mini',
+                        webSearch,
+                        conversationId,
+                        images: selectedImages,
                     },
                 },
             );
-            setInput('');
+        } else {
+            // Text-only
+            sendMessage(
+                { text: trimmed },
+                {
+                    body: {
+                        model: state?.model || 'openai/gpt-4.1-mini',
+                        webSearch,
+                        conversationId,
+                        images: [],
+                    },
+                },
+            );
         }
+
+        setInput('');
+        setSelectedImages([]);
+
+        // Ensure we scroll after sending
+        setTimeout(() => scrollToBottom(), 100);
     };
 
     return (
@@ -186,12 +231,12 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                     </p>
                 </div>
             )}
-            {/* Messages Container */}
+
+            {/* Messages Container - updated scroll refs/styles */}
             <div
-                className="flex-1 min-h-0 p-1" // <-- add min-h-0 here!
-                ref={messagesContainerRef}
-                onScroll={handleScroll}
-                style={{ overflowY: 'auto' }}
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto overscroll-contain px-1 sm:px-2 py-1 scroll-smooth"
+                style={{ scrollBehavior: 'smooth' }}
             >
                 <div className="max-w-6xl mx-auto px-1">
                     {/* messages */}
@@ -221,117 +266,150 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                 )}
                             <Message from={message.role} key={message.id}>
                                 <MessageContent key={`${message.id}-content`}>
-                                    {message.parts.map((part: any, i: number) => {
-                                        const isLastMessage = messageIndex === messages.length - 1;
-                                        switch (part.type) {
-                                            case 'text':
-                                                return (
-                                                    <div key={`${message.id}-${i}`}>
-                                                        <Response>
-                                                            {part.text}
-                                                        </Response>
-                                                        {message.role === 'assistant' && (
-                                                            <>
-                                                                <Actions className={cn(
-                                                                    "mt-2 transition-opacity duration-200 group-hover:opacity-100",
-                                                                    isLastMessage ? "opacity-100" : "opacity-0 "
-                                                                )}>
-                                                                    <Action
-                                                                        className='cursor-pointer'
-                                                                        onClick={() => regenerate()}
-                                                                        tooltip="Retry"
-                                                                        label="Retry"
-                                                                        disabled={!isLastMessage || status === 'streaming'}
-                                                                    >
-                                                                        <RefreshCcwIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        className='cursor-pointer'
-                                                                        onClick={() => handleCopy(part.text)}
-                                                                        tooltip="Copy"
-                                                                        label="Copy"
-                                                                    >
-                                                                        <CopyIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        className='cursor-pointer'
-                                                                        onClick={() => handleLike(message.id)}
-                                                                        tooltip="Like"
-                                                                        label="Like"
-                                                                        variant={likedMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                    >
-                                                                        <ThumbsUpIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        className='cursor-pointer'
-                                                                        onClick={() => handleDislike(message.id)}
-                                                                        tooltip="Dislike"
-                                                                        label="Dislike"
-                                                                        variant={dislikedMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                    >
-                                                                        <ThumbsDownIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        className='cursor-pointer'
-                                                                        onClick={() => handleShare(part.text)}
-                                                                        tooltip="Share"
-                                                                        label="Share"
-                                                                    >
-                                                                        <ShareIcon className="size-3" />
-                                                                    </Action>
-                                                                    <Action
-                                                                        className='cursor-pointer'
-                                                                        onClick={() => handleFavorite(message.id)}
-                                                                        tooltip="Favorite"
-                                                                        label="Favorite"
-                                                                        variant={favoriteMessages.has(message.id) ? 'default' : 'ghost'}
-                                                                    >
-                                                                        <HeartIcon className="size-3" />
-                                                                    </Action>
-                                                                    {/* Token Usage Display */}
-                                                                    <TokenUsesComponent
-                                                                        totalUsage={(message as any).totalUsage}
-                                                                        open={tokenPopoverOpen[message.id] || false}
-                                                                        onOpenChange={(open) => setTokenPopoverOpen(prev => ({
-                                                                            ...prev,
-                                                                            [message.id]: open
-                                                                        }))}
-                                                                    />
-                                                                </Actions>
-                                                            </>
-                                                        )
-                                                        }
-                                                    </div>
-                                                );
-                                            case 'reasoning':
-                                                return (
-                                                    <>
-                                                        {status === 'streaming' && part.text &&
-                                                            <Reasoning
-                                                                key={`${message.id}-reasoning`}
-                                                                className="w-full"
-                                                                isStreaming={status === 'streaming'}
-                                                            >
-                                                                <ReasoningTrigger />
-                                                                <ReasoningContent>{part.text}</ReasoningContent>
-                                                            </Reasoning>
-                                                        }
-                                                    </>
-                                                );
-                                            default:
-                                                return null;
-                                        }
-                                    })}
+                                    {/* Images grid (if any) */}
+                                    {message.parts?.some((part: any) => part.type === 'image') && (
+                                        <div className="mb-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {message.parts
+                                                    ?.filter((part: any) => part.type === 'image')
+                                                    .map((part: any, i: number) => (
+                                                        <div
+                                                            key={`${message.id}-image-${i}`}
+                                                            className="relative group overflow-hidden rounded-lg border bg-gray-50 dark:bg-gray-800 cursor-pointer"
+                                                            onClick={() => window.open(part.image, '_blank')}
+                                                        >
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            <img
+                                                                src={part.image}
+                                                                alt={`Message image ${i + 1}`}
+                                                                className="w-full h-48 sm:h-56 lg:h-64 object-cover transition-transform group-hover:scale-105"
+                                                                onLoad={() => setTimeout(() => scrollToBottom(), 50)}
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                                                                <div className="bg-white/90 dark:bg-black/90 rounded-full p-2">
+                                                                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                    </svg>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                }
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Text and other parts (exclude images) */}
+                                    {message.parts
+                                        ?.filter((part: any) => part.type !== 'image')
+                                        .map((part: any, i: number) => {
+                                            const isLastMessage = messageIndex === messages.length - 1;
+                                            switch (part.type) {
+                                                case 'text':
+                                                    return (
+                                                        <div key={`${message.id}-${i}`}>
+                                                            <Response>{part.text}</Response>
+                                                            {message.role === 'assistant' && (
+                                                                <>
+                                                                    <Actions className={cn(
+                                                                        "mt-2 transition-opacity duration-200 group-hover:opacity-100",
+                                                                        isLastMessage ? "opacity-100" : "opacity-0 "
+                                                                    )}>
+                                                                        <Action
+                                                                            className='cursor-pointer'
+                                                                            onClick={() => regenerate()}
+                                                                            tooltip="Retry"
+                                                                            label="Retry"
+                                                                            disabled={!isLastMessage || status === 'streaming'}
+                                                                        >
+                                                                            <RefreshCcwIcon className="size-3" />
+                                                                        </Action>
+                                                                        {/* <Action
+                                                                            className='cursor-pointer'
+                                                                            onClick={() => handleCopy(part.text)}
+                                                                            tooltip="Copy"
+                                                                            label="Copy"
+                                                                        >
+                                                                            <CopyIcon className="size-3" />
+                                                                        </Action>
+                                                                        <Action
+                                                                            className='cursor-pointer'
+                                                                            onClick={() => handleLike(message.id)}
+                                                                            tooltip="Like"
+                                                                            label="Like"
+                                                                            variant={likedMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                        >
+                                                                            <ThumbsUpIcon className="size-3" />
+                                                                        </Action>
+                                                                        <Action
+                                                                            className='cursor-pointer'
+                                                                            onClick={() => handleDislike(message.id)}
+                                                                            tooltip="Dislike"
+                                                                            label="Dislike"
+                                                                            variant={dislikedMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                        >
+                                                                            <ThumbsDownIcon className="size-3" />
+                                                                        </Action>
+                                                                        <Action
+                                                                            className='cursor-pointer'
+                                                                            onClick={() => handleShare(part.text)}
+                                                                            tooltip="Share"
+                                                                            label="Share"
+                                                                        >
+                                                                            <ShareIcon className="size-3" />
+                                                                        </Action>
+                                                                        <Action
+                                                                            className='cursor-pointer'
+                                                                            onClick={() => handleFavorite(message.id)}
+                                                                            tooltip="Favorite"
+                                                                            label="Favorite"
+                                                                            variant={favoriteMessages.has(message.id) ? 'default' : 'ghost'}
+                                                                        >
+                                                                            <HeartIcon className="size-3" />
+                                                                        </Action> */}
+                                                                        {/* Token Usage Display */}
+                                                                        <TokenUsesComponent
+                                                                            totalUsage={(message as any).totalUsage}
+                                                                            open={tokenPopoverOpen[message.id] || false}
+                                                                            onOpenChange={(open) => setTokenPopoverOpen(prev => ({
+                                                                                ...prev,
+                                                                                [message.id]: open
+                                                                            }))}
+                                                                        />
+                                                                    </Actions>
+                                                                </>
+                                                            )
+                                                            }
+                                                        </div>
+                                                    );
+                                                case 'reasoning':
+                                                    return (
+                                                        <>
+                                                            {status === 'streaming' && part.text &&
+                                                                <Reasoning
+                                                                    key={`${message.id}-reasoning`}
+                                                                    className="w-full"
+                                                                    isStreaming={status === 'streaming'}
+                                                                >
+                                                                    <ReasoningTrigger />
+                                                                    <ReasoningContent>{part.text}</ReasoningContent>
+                                                                </Reasoning>
+                                                            }
+                                                        </>
+                                                    );
+                                                default:
+                                                    return null;
+                                            }
+                                        })}
                                 </MessageContent>
                             </Message>
                         </div>
                     ))}
                     {status === 'submitted' && <Loader />}
-                    <div ref={messagesEndRef} />
                 </div>
             </div>
 
-            {/* Input Footer - Now part of the same container */}
+            {/* Moved upload UI to PromptInputComponent; keep only the input area here */}
             <div className="sticky bottom-0 z-20 bg-background">
                 <div className="max-w-6xl mx-auto px-1 py-4">
                     <PromptInputComponent
@@ -341,6 +419,13 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                         status={status}
                         webSearch={webSearch}
                         setWebSearch={setWebSearch}
+                        // file upload props
+                        onImageSelect={handleImageSelect}
+                        fileInputRef={fileInputRef}
+                        isUploadingFile={isUploadingFile}
+                        selectedImages={selectedImages}
+                        removeImage={removeImage}
+                        handleFileChange={handleFileChange}
                     />
                 </div>
             </div>
