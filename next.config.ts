@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb", // set your desired limit here
+    },
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb", // increase from default 1MB to 5MB or more
+    },
+  },
   images: {
     remotePatterns: [
       {
