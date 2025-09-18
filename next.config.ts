@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'oneaccountai.com',
+        port: '', // leave empty unless your image server uses a custom port
+        pathname: '/api/file/**',
+      },
+    ],
+  },
   /* config options here */
   env: {
     AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,

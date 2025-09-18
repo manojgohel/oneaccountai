@@ -1,0 +1,1 @@
+export const FILE_URL = "http://oneaccountai.com/api/file/";

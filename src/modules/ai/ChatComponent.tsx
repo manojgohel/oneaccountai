@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
@@ -18,12 +19,15 @@ import {
     SourcesContent,
     SourcesTrigger,
 } from '@/components/sources';
+import { FILE_URL } from '@/consts/ai.consts';
 import { cn } from '@/lib/utils';
 import { useGlobalContext } from '@/providers/context-provider';
 import { useChat } from '@ai-sdk/react';
 import {
     RefreshCcwIcon
 } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PromptInputComponent from './PromptInputComponent';
 import TokenUsesComponent from './TokenUsesComponent';
@@ -154,72 +158,119 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     };
 
     // Submit with images included (immediate display + send)
-    const handleSubmit = (e: React.FormEvent) => {
+    // const handleSubmit = (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     const trimmed = input.trim();
+    //     if (!trimmed && selectedImages.length === 0) return;
+
+    //     // Ensure auto-scroll will happen for new messages
+    //     shouldScrollRef.current = true;
+
+    //     if (selectedImages.length > 0) {
+    //         // Build parts for immediate display
+    //         const parts: any[] = [];
+    //         if (trimmed) {
+    //             parts.push({ type: 'text', text: trimmed });
+    //         }
+    //         selectedImages.forEach((file) => {
+    //             parts.push({ type: 'file', url: `http://oneaccountai.com/api/file/${file}`, filename: file });
+    //         });
+
+    //         const userMessageWithImages = {
+    //             id: `user-${Date.now()}`,
+    //             role: 'user' as const,
+    //             content: trimmed,
+    //             createdAt: new Date(),
+    //             parts
+    //         };
+    //         console.log("🚀💡💡💡💡💡=====> ~ ChatComponent.tsx:187 ~ handleSubmit ~ userMessageWithImages:", userMessageWithImages);
+
+    //         // Show immediately
+    //         setMessages((prev) => [...prev, userMessageWithImages]);
+
+    //         // Scroll down shortly after adding
+    //         setTimeout(() => scrollToBottom(), 50);
+
+    //         // Send to API
+    //         sendMessage(
+    //             { text: trimmed },
+    //             {
+    //                 body: {
+    //                     model: state?.model || 'openai/gpt-4.1-mini',
+    //                     webSearch,
+    //                     conversationId,
+    //                     // images: selectedImages,
+    //                 },
+    //             },
+    //         );
+    //     } else {
+    //         // Text-only
+    //         sendMessage(
+    //             { text: trimmed },
+    //             {
+    //                 body: {
+    //                     model: state?.model || 'openai/gpt-4.1-mini',
+    //                     webSearch,
+    //                     conversationId,
+    //                     images: [],
+    //                 },
+    //             },
+    //         );
+    //     }
+
+    //     setInput('');
+    //     setSelectedImages([]);
+
+    //     // Ensure we scroll after sending
+    //     setTimeout(() => scrollToBottom(), 100);
+    // };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const trimmed = input.trim();
-        if (!trimmed && selectedImages.length === 0) return;
+        if (!trimmed) return;
 
-        // Ensure auto-scroll will happen for new messages
+        // Ensure auto-scroll for new messages
         shouldScrollRef.current = true;
 
-        if (selectedImages.length > 0) {
-            // Build parts for immediate display
-            const parts: any[] = [];
-            if (trimmed) {
-                parts.push({ type: 'text', text: trimmed });
-            }
-            selectedImages.forEach((file) => {
-                parts.push({ type: 'image', image: `http://oneaccountai.com/api/file/${file}` });
-            });
+        // Build message parts for ModelMessage format
+        const parts: any = [
+            ...(
+                selectedImages.length > 0
+                    ? selectedImages.map((file) => ({
+                        type: 'file',
+                        mediaType: 'image/png', // Or dynamically set based on file type
+                        url: `${FILE_URL}${file}`, // Or use file blobs/data URLs if required
+                        filename: file
+                    }))
+                    : []
+            ),
+            ...(trimmed ? [{ type: 'text', text: trimmed }] : [])
+        ];
+        console.log("🚀💡💡💡💡💡=====> ~ ChatComponent.tsx:247 ~ handleSubmit ~ parts:", parts);
 
-            const userMessageWithImages = {
-                id: `user-${Date.now()}`,
-                role: 'user' as const,
-                content: trimmed,
-                createdAt: new Date(),
+        // Send ModelMessage to the API (no top-level images key)
+        sendMessage(
+            {
+                role: 'user',
                 parts
-            };
-            console.log("🚀💡💡💡💡💡=====> ~ ChatComponent.tsx:187 ~ handleSubmit ~ userMessageWithImages:", userMessageWithImages);
-
-            // Show immediately
-            setMessages((prev) => [...prev, userMessageWithImages]);
-
-            // Scroll down shortly after adding
-            setTimeout(() => scrollToBottom(), 50);
-
-            // Send to API
-            sendMessage(
-                { text: trimmed },
-                {
-                    body: {
-                        model: state?.model || 'openai/gpt-4.1-mini',
-                        webSearch,
-                        conversationId,
-                        images: selectedImages,
-                    },
-                },
-            );
-        } else {
-            // Text-only
-            sendMessage(
-                { text: trimmed },
-                {
-                    body: {
-                        model: state?.model || 'openai/gpt-4.1-mini',
-                        webSearch,
-                        conversationId,
-                        images: [],
-                    },
-                },
-            );
-        }
+            },
+            {
+                body: {
+                    model: state?.model || 'openai/gpt-4.1-mini',
+                    webSearch,
+                    conversationId
+                }
+            }
+        );
 
         setInput('');
         setSelectedImages([]);
 
-        // Ensure we scroll after sending
+        // Ensure scroll after sending
         setTimeout(() => scrollToBottom(), 100);
     };
+
 
     return (
         <div className="flex min-h-full flex-col">
@@ -278,7 +329,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                                             className="relative group overflow-hidden rounded-lg border bg-gray-50 dark:bg-gray-800 cursor-pointer"
                                                             onClick={() => window.open(part.image, '_blank')}
                                                         >
-                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            { }
                                                             <img
                                                                 src={part.image}
                                                                 alt={`Message image ${i + 1}`}
@@ -396,6 +447,20 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                                                 </Reasoning>
                                                             }
                                                         </>
+                                                    );
+                                                case 'file':
+                                                    return (
+                                                        <Link target='_blank' href={`${part.url}`} className="cursor-pointer w-50 h-50 relative overflow-hidden rounded-md border border-gray-200 group-hover:opacity-70">
+                                                            <Image
+                                                                key={(part.filename || 'image') + i}
+                                                                src={`${part.url ?? part.data}`}
+                                                                alt={part.filename ?? 'image'}
+                                                                width={500}
+                                                                height={500}
+                                                                className="rounded-md"
+                                                                unoptimized
+                                                            />
+                                                        </Link>
                                                     );
                                                 default:
                                                     return null;

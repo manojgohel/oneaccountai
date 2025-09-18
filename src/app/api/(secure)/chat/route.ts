@@ -22,17 +22,18 @@ export async function POST(req: Request) {
         return new Response('Conversation not found', { status: 404 });
     }
     const result = streamText({
-        model: webSearch ? 'openai/gpt-4.1' : model,
+        model: webSearch ? 'perplexity/sonar' : model,
         system: conversation?.data?.systemPrompt || 'You are a helpful assistant.',
         messages: modelMessages,
         async onFinish(response) {
+            console.log("🚀💡💡💡💡💡=====> ~ route.ts:31 ~ onFinish ~ response:", response);
             const { totalUsage, content } = response;
 
             const userMessage = modelMessages[messages.length - 1];
             const requestMessage = {
                 parts: userMessage?.content ? userMessage.content : [],
                 id: nanoid(),
-                role: userMessage?.role
+                role: userMessage?.role,
             };
 
 
@@ -44,6 +45,9 @@ export async function POST(req: Request) {
                 model
             };
             saveMessage({ id: conversationId, requestMessage, responseMessage, userId });
+        },
+        onError(error) {
+            console.error('Error in chat route:', error);
         }
     });
 
