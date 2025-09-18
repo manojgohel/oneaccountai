@@ -11,6 +11,7 @@ import {
     PromptInputToolbar,
     PromptInputTools
 } from '@/components/prompt-input';
+import { Label } from '@/components/ui/label';
 import {
     GlobeIcon,
     Paperclip
@@ -43,7 +44,7 @@ export default function PromptInputComponent({
 
         {/* Image preview section */}
         {selectedImages?.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2 p-2 bg-secondary/20 rounded">
+            <div className="mb-3 flex flex-wrap gap-2 p-2 bg-secondary rounded">
                 {selectedImages.map((file: string, index: number) => (
                     <div key={index} className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -106,5 +107,11 @@ export default function PromptInputComponent({
                 />
             </PromptInputToolbar>
         </PromptInput>
+        <div className="w-full flex justify-center mt-2">
+            <Label className="text-xs text-center text-muted-foreground">
+                AI can make mistakes. Check important info.
+            </Label>
+        </div>
+
     </>
 }

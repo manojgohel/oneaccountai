@@ -4,7 +4,18 @@ import deepClone from "@/lib/deepClone";
 import dbConnect from "@/lib/mongoose";
 import Conversation from "@/models/Conversation";
 import { objectId } from "@/utils/common";
+import { generateText } from 'ai';
 import { cookies } from "next/headers";
+
+const generateTitle = async (prompt: string): Promise<string> => {
+    const { text } = await generateText({
+        model: "openai/gpt-4o-mini",
+        system: 'You are a friendly assistant!',
+        prompt: `Generate a concise and descriptive title for the following conversation in 3 words or less. Do not use punctuation or quotation marks.
+        Conversation: ${prompt}`,
+    });
+    return text;
+}
 
 export async function createConversation({ name, messages = [] }: any) {
     try {
@@ -20,7 +31,7 @@ export async function createConversation({ name, messages = [] }: any) {
         // Create new conversation
         const newConversation = new Conversation({
             userId,
-            name: name || `New Conversation ${Date.now()}`,
+            name: name || `Unnamed Conversation`,
             messages,
         });
 
@@ -95,6 +106,11 @@ export async function saveConversation({ id, content, userId }: any) {
             { new: true } // Return the updated document
         );
 
+        if (updatedConversation?.name === 'Unnamed Conversation' && updatedConversation?.messages?.length === 1) {
+            const name = await generateTitle(JSON.stringify(updatedConversation?.messages[0]?.parts));
+            updatedConversation.name = name;
+            await updatedConversation.save();
+        }
         if (!updatedConversation) {
             console.log('Conversation not found or user not authorized');
             return { status: false, error: 'Conversation not found or user not authorized' };
@@ -234,3 +250,4 @@ export async function getMostRecentlyUpdatedConversationId() {
         return null;
     }
 }
+

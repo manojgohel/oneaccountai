@@ -20,6 +20,7 @@ import {
     SourcesTrigger,
 } from '@/components/sources';
 import { FILE_URL } from '@/consts/ai.consts';
+import { useGreeting } from '@/hooks/use-get-greeting';
 import { cn } from '@/lib/utils';
 import { useGlobalContext } from '@/providers/context-provider';
 import { useChat } from '@ai-sdk/react';
@@ -28,7 +29,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PromptInputComponent from './PromptInputComponent';
 import TokenUsesComponent from './TokenUsesComponent';
 
@@ -56,72 +57,22 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     const [isUploadingFile, setIsUploadingFile] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    // Message interactions
-    const [likedMessages, setLikedMessages] = useState<Set<string>>(new Set());
-    const [dislikedMessages, setDislikedMessages] = useState<Set<string>>(new Set());
-    const [favoriteMessages, setFavoriteMessages] = useState<Set<string>>(new Set());
-
-    // Improved scroll handling (from example)
-    const chatContainerRef = useRef<HTMLDivElement | null>(null);
-    const shouldScrollRef = useRef(true);
 
     const { messages, sendMessage, status, regenerate, setMessages } = useChat({
         messages: conversations?.messages || [],
         onFinish: () => {
+            // scrollToBottom();
             scrollToBottom();
         }
     });
 
-    // Improved auto-scroll to bottom
-    const scrollToBottom = useCallback(() => {
-        if (chatContainerRef.current && shouldScrollRef.current) {
-            const scrollElement = chatContainerRef.current;
-
-            // Use both scrollTop and scrollIntoView for better reliability
-            scrollElement.scrollTop = scrollElement.scrollHeight;
-
-            setTimeout(() => {
-                const lastMessage = scrollElement.lastElementChild?.lastElementChild;
-                if (lastMessage) {
-                    lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                }
-            }, 50);
-        }
-    }, []);
-
-    // Enhanced auto-scroll when messages change
     useEffect(() => {
-        if (messages.length > 0) {
-            setTimeout(() => scrollToBottom(), 50);
-            setTimeout(() => scrollToBottom(), 200);
-            setTimeout(() => scrollToBottom(), 500);
-        }
-    }, [messages, scrollToBottom]);
+        // scrollToBottom();
+        scrollToBottom();
+    }, [messages, status]);
 
-    // Auto-scroll when status changes
-    useEffect(() => {
-        if ((status as any) === 'loading' || status === 'streaming') {
-            scrollToBottom();
-        }
-    }, [status, scrollToBottom]);
 
-    // Check if user is near bottom to decide whether to auto-scroll
-    const handleScroll = useCallback(() => {
-        if (chatContainerRef.current) {
-            const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-            const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-            shouldScrollRef.current = isNearBottom;
-        }
-    }, []);
 
-    // Add/remove scroll listener
-    useEffect(() => {
-        const scrollElement = chatContainerRef.current;
-        if (scrollElement) {
-            scrollElement.addEventListener('scroll', handleScroll);
-            return () => scrollElement.removeEventListener('scroll', handleScroll);
-        }
-    }, [handleScroll]);
 
     // File upload handlers (from example)
     const handleImageSelect = () => {
@@ -157,81 +108,10 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
         setSelectedImages(prev => prev.filter((_, i) => i !== index));
     };
 
-    // Submit with images included (immediate display + send)
-    // const handleSubmit = (e: React.FormEvent) => {
-    //     e.preventDefault();
-    //     const trimmed = input.trim();
-    //     if (!trimmed && selectedImages.length === 0) return;
-
-    //     // Ensure auto-scroll will happen for new messages
-    //     shouldScrollRef.current = true;
-
-    //     if (selectedImages.length > 0) {
-    //         // Build parts for immediate display
-    //         const parts: any[] = [];
-    //         if (trimmed) {
-    //             parts.push({ type: 'text', text: trimmed });
-    //         }
-    //         selectedImages.forEach((file) => {
-    //             parts.push({ type: 'file', url: `http://oneaccountai.com/api/file/${file}`, filename: file });
-    //         });
-
-    //         const userMessageWithImages = {
-    //             id: `user-${Date.now()}`,
-    //             role: 'user' as const,
-    //             content: trimmed,
-    //             createdAt: new Date(),
-    //             parts
-    //         };
-    //         console.log("🚀💡💡💡💡💡=====> ~ ChatComponent.tsx:187 ~ handleSubmit ~ userMessageWithImages:", userMessageWithImages);
-
-    //         // Show immediately
-    //         setMessages((prev) => [...prev, userMessageWithImages]);
-
-    //         // Scroll down shortly after adding
-    //         setTimeout(() => scrollToBottom(), 50);
-
-    //         // Send to API
-    //         sendMessage(
-    //             { text: trimmed },
-    //             {
-    //                 body: {
-    //                     model: state?.model || 'openai/gpt-4.1-mini',
-    //                     webSearch,
-    //                     conversationId,
-    //                     // images: selectedImages,
-    //                 },
-    //             },
-    //         );
-    //     } else {
-    //         // Text-only
-    //         sendMessage(
-    //             { text: trimmed },
-    //             {
-    //                 body: {
-    //                     model: state?.model || 'openai/gpt-4.1-mini',
-    //                     webSearch,
-    //                     conversationId,
-    //                     images: [],
-    //                 },
-    //             },
-    //         );
-    //     }
-
-    //     setInput('');
-    //     setSelectedImages([]);
-
-    //     // Ensure we scroll after sending
-    //     setTimeout(() => scrollToBottom(), 100);
-    // };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const trimmed = input.trim();
         if (!trimmed) return;
-
-        // Ensure auto-scroll for new messages
-        shouldScrollRef.current = true;
 
         // Build message parts for ModelMessage format
         const parts: any = [
@@ -266,30 +146,54 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
 
         setInput('');
         setSelectedImages([]);
-
-        // Ensure scroll after sending
-        setTimeout(() => scrollToBottom(), 100);
     };
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const bottomRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        if (bottomRef.current) {
+            setTimeout(() => {
+                bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }, 50); // small delay
+        }
+    };
+    const greeting = useGreeting();
+
 
 
     return (
-        <div className="flex min-h-full flex-col">
+        <div className="flex min-h-full flex-col bg-secondary">
             {messages.length === 0 && status !== 'streaming' && (
-                <div className="flex flex-1 flex-col items-center justify-center  text-center">
-                    <h1 className="text-2xl font-semibold">Welcome to One Account AI</h1>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        Ask any question related to One Account and get instant answers from 50+ premium AI models.
-                    </p>
+                <div className="flex flex-1 items-center justify-center w-full min-h-[60vh]">
+                    <div className="w-full max-w-4xl px-4">
+                        <h1 className='text-center p-5 text-3xl'>{greeting}, {state?.user?.name || state?.user?.email || "Guest"}</h1>
+                        <PromptInputComponent
+                            handleSubmit={handleSubmit}
+                            setInput={setInput}
+                            input={input}
+                            status={status}
+                            webSearch={webSearch}
+                            setWebSearch={setWebSearch}
+                            // file upload props
+                            onImageSelect={handleImageSelect}
+                            fileInputRef={fileInputRef}
+                            isUploadingFile={isUploadingFile}
+                            selectedImages={selectedImages}
+                            removeImage={removeImage}
+                            handleFileChange={handleFileChange}
+                        />
+                    </div>
                 </div>
             )}
-
             {/* Messages Container - updated scroll refs/styles */}
             <div
-                ref={chatContainerRef}
-                className="flex-1 overflow-y-auto overscroll-contain px-1 sm:px-2 py-1 scroll-smooth"
-                style={{ scrollBehavior: 'smooth' }}
+                ref={containerRef}
+                style={{ scrollBehavior: "smooth" }}
+                className="flex-1 overflow-y-auto overscroll-contain px-1 sm:px-2 py-1 scroll-smooth bg-secondary"
             >
-                <div className="max-w-6xl mx-auto px-1">
+                <div className="max-w-6xl mx-auto px-1 " style={{ scrollBehavior: 'smooth' }} ref={containerRef}
+                >
                     {/* messages */}
                     {messages && messages.map((message, messageIndex) => (
                         <div key={message.id} className="mb-4">
@@ -358,7 +262,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                             switch (part.type) {
                                                 case 'text':
                                                     return (
-                                                        <div key={`${message.id}-${i}`}>
+                                                        <div key={`${message.id}-${i}`} >
                                                             <Response>{part.text}</Response>
                                                             {message.role === 'assistant' && (
                                                                 <>
@@ -471,29 +375,35 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                         </div>
                     ))}
                     {status === 'submitted' && <Loader />}
+                    {/* Dummy anchor div at the bottom */}
                 </div>
+                <div ref={bottomRef} />
+
             </div>
 
             {/* Moved upload UI to PromptInputComponent; keep only the input area here */}
-            <div className="sticky bottom-0 z-20 bg-background">
-                <div className="max-w-6xl mx-auto px-1 py-4">
-                    <PromptInputComponent
-                        handleSubmit={handleSubmit}
-                        setInput={setInput}
-                        input={input}
-                        status={status}
-                        webSearch={webSearch}
-                        setWebSearch={setWebSearch}
-                        // file upload props
-                        onImageSelect={handleImageSelect}
-                        fileInputRef={fileInputRef}
-                        isUploadingFile={isUploadingFile}
-                        selectedImages={selectedImages}
-                        removeImage={removeImage}
-                        handleFileChange={handleFileChange}
-                    />
+            {messages.length !== 0 && (
+                <div className="sticky bottom-0 z-20" >
+                    <div className="max-w-6xl mx-auto px-1 py-4">
+                        <PromptInputComponent
+                            handleSubmit={handleSubmit}
+                            setInput={setInput}
+                            input={input}
+                            status={status}
+                            webSearch={webSearch}
+                            setWebSearch={setWebSearch}
+                            // file upload props
+                            onImageSelect={handleImageSelect}
+                            fileInputRef={fileInputRef}
+                            isUploadingFile={isUploadingFile}
+                            selectedImages={selectedImages}
+                            removeImage={removeImage}
+                            handleFileChange={handleFileChange}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
+
         </div >
     );
 };

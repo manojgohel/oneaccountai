@@ -113,23 +113,23 @@ export default function ModelSelection({ model, description }: { model?: string,
     return (
         <>
             {/* {JSON.stringify(params?.conversationId)} */}
-            <div className="max-w-xs">
+            <div className="flex-1 min-w-0 overflow-hidden">
                 <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                         <button
                             type="button"
-                            className="text-left cursor-pointer bg-transparent border-0 p-0"
+                            className="text-left cursor-pointer bg-transparent border-0 p-0 w-full min-w-0"
                             disabled={status === 'pending'}
                         >
-                            <div className="flex flex-col max-w-xs">
-                                <div className="font-semibold text-xs text-neutral-900 dark:text-neutral-100 truncate whitespace-nowrap overflow-hidden max-w-xs">
+                            <div className="flex flex-col items-start min-w-0 overflow-hidden">
+                                <div className="font-semibold text-xs text-neutral-900 dark:text-neutral-100 truncate w-full">
                                     {status === 'pending' ? (
                                         <span>Loading models...</span>
                                     ) : (
                                         selected?.title
                                     )}
                                 </div>
-                                <div className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xs overflow-hidden whitespace-nowrap">
+                                <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate w-full">
                                     {description
                                         ?.split(" ")
                                         .slice(0, 5)
@@ -141,7 +141,7 @@ export default function ModelSelection({ model, description }: { model?: string,
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         align="start"
-                        className="min-w-xs max-w-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-lg p-0 flex flex-col"
+                        className="w-[calc(100vw-2rem)] sm:w-96 md:w-[30rem] lg:w-[36rem] bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-lg p-0 flex flex-col"
                     >
                         {/* Sticky Search Input */}
                         <div className="p-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 sticky top-0 z-10">
@@ -176,9 +176,9 @@ export default function ModelSelection({ model, description }: { model?: string,
                                                 : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
                                             }`}
                                     >
-                                        <span className="text-neutral-900 dark:text-neutral-100">{model.title}</span>
-                                        <span className="text-xs text-neutral-500 dark:text-neutral-400 text-justify">{model.description}</span>
-                                        <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-1">
+                                        <span className="text-neutral-900 dark:text-neutral-100 truncate w-full">{model.title}</span>
+                                        <span className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 w-full">{model.description}</span>
+                                        <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 truncate w-full">
                                             Input: {model.price.input} | Output: {model.price.output} | Thinking: {model.price.thinking} / 1M tokens
                                         </div>
                                     </DropdownMenuItem>

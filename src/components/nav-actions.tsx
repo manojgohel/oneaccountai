@@ -3,7 +3,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  DollarSign,
   LogOut,
   User,
   User2,
@@ -38,11 +37,11 @@ const data = [
       icon: User2Icon,
       link: "/secure/profile"
     },
-    {
-      label: "Wallet or Uses Credits",
-      icon: DollarSign,
-      link: "/secure/wallet"
-    },
+    // {
+    //   label: "Wallet or Uses Credits",
+    //   icon: DollarSign,
+    //   link: "/secure/wallet"
+    // },
   ],
   [
     {

@@ -18,7 +18,7 @@ const ConversationSchema = new Schema<any>({
     },
     name: {
         type: String,
-        default: 'New Conversation'
+        default: 'Unnamed Conversation'
     },
     messages: {
         type: [Schema.Types.Mixed],

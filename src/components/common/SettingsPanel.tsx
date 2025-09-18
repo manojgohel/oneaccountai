@@ -66,7 +66,7 @@ export default function SettingsPanel() {
                     <SettingsIcon size={16} />
                 </Button>
             </DrawerTrigger>
-            <DrawerContent>
+            <DrawerContent className="bg-sidebar">
                 <div className="mx-auto w-full max-w-md">
                     <DrawerHeader>
                         <DrawerTitle>Current Conversation Settings</DrawerTitle>

@@ -26,7 +26,6 @@ export async function POST(req: Request) {
         system: conversation?.data?.systemPrompt || 'You are a helpful assistant.',
         messages: modelMessages,
         async onFinish(response) {
-            console.log("🚀💡💡💡💡💡=====> ~ route.ts:31 ~ onFinish ~ response:", response);
             const { totalUsage, content } = response;
 
             const userMessage = modelMessages[messages.length - 1];

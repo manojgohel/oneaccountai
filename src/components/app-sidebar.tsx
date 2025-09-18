@@ -1,7 +1,8 @@
 "use client"
 
 import {
-  Command,
+  DollarSign,
+  Search,
   Sparkles
 } from "lucide-react"
 import * as React from "react"
@@ -20,30 +21,23 @@ import { useQuery } from "@tanstack/react-query"
 
 // This is sample data.
 const data = {
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: Command,
-      plan: "Enterprise",
-    }
-  ],
   navMain: [
     {
       title: "New Chat",
       url: "/secure/new",
       icon: Sparkles,
+      isActive: true,
     },
-    // {
-    //   title: "Search",
-    //   url: "#",
-    //   icon: Search,
-    // },
-    // {
-    //   title: "Settings",
-    //   url: "#",
-    //   icon: Settings,
-    //   isActive: true,
-    // },
+    {
+      title: "Search",
+      url: "#",
+      icon: Search,
+    },
+    {
+      title: "Token Usage",
+      url: "/secure/wallet",
+      icon: DollarSign,
+    },
     // {
     //   title: "Developers",
     //   url: "#",
