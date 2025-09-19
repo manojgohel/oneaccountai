@@ -5,6 +5,7 @@ import dbConnect from "@/lib/mongoose";
 import Conversation from "@/models/Conversation";
 import { objectId } from "@/utils/common";
 import { generateText } from 'ai';
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 const generateTitle = async (prompt: string): Promise<string> => {
@@ -115,7 +116,7 @@ export async function saveConversation({ id, content, userId }: any) {
             console.log('Conversation not found or user not authorized');
             return { status: false, error: 'Conversation not found or user not authorized' };
         }
-
+        revalidatePath(`/secure/${updatedConversation._id}`);
         return { status: true, data: deepClone(updatedConversation) };
 
     } catch (error) {
@@ -129,7 +130,7 @@ export async function getConversation(conversationId: string) {
         const cookiesStore = await cookies();
         const userId = cookiesStore.get('_id')?.value;
         await dbConnect();
-        const conversations = await Conversation.findOne({ _id: objectId(conversationId), userId: objectId(userId) }).lean();
+        const conversations = await Conversation.findOne({ _id: objectId(conversationId), userId: objectId(userId), deletedAt: null }).lean();
         return { status: true, data: deepClone(conversations) };
     } catch (error) {
         console.error('Error fetching conversations:', error);
@@ -144,7 +145,7 @@ export async function getConversations(lastId?: string, limit: number = 100) {
         await dbConnect();
 
         // Build the query
-        const matchQuery: any = { userId: objectId(userId) };
+        const matchQuery: any = { userId: objectId(userId), deletedAt: null };
 
         if (lastId) {
             matchQuery._id = { $lt: objectId(lastId) };
@@ -217,12 +218,14 @@ export async function deleteConversation(conversationId: string) {
         const cookiesStore = await cookies();
         const userId = cookiesStore.get('_id')?.value;
 
-        const result = await Conversation.deleteOne({
+        const result = await Conversation.updateOne({
             _id: objectId(conversationId),
             userId: objectId(userId)
+        }, {
+            deletedAt: new Date()
         });
 
-        if (result.deletedCount === 0) {
+        if (result.modifiedCount === 0) {
             return { status: false, error: 'Conversation not found or user not authorized' };
         }
 
@@ -251,3 +254,16 @@ export async function getMostRecentlyUpdatedConversationId() {
     }
 }
 
+
+export async function getConversationMetaData(conversationId: string) {
+    try {
+        const cookiesStore = await cookies();
+        const userId = cookiesStore.get('_id')?.value;
+        await dbConnect();
+        const conversations = await Conversation.findOne({ _id: objectId(conversationId), userId: objectId(userId) }).select('-messages').lean();
+        return { status: true, ...deepClone(conversations) };
+    } catch (error) {
+        console.error('Error fetching conversations:', error);
+        return { status: false, error: 'Failed to fetch conversations' };
+    }
+}

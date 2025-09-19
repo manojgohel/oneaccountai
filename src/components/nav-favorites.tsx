@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import {
@@ -7,7 +8,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { deleteConversation, updateConversation } from "@/actions/conversation/conversation.action";
+import { deleteConversation, getConversations, updateConversation } from "@/actions/conversation/conversation.action";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,24 +25,23 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-export function NavFavorites({
-  favorites,
-}: {
-  favorites: {
-    _id: string
-    name: string
-  }[]
-}) {
+export function NavFavorites() {
   const { isMobile } = useSidebar();
 
+  const { status, data: conversations } = useQuery({ queryKey: ['conversations'], queryFn: () => getConversations() });
+
+
   const queryClient = useQueryClient();
+  const route = useRouter();
   const { mutate: handleDeleteConversation, status: deleteStatus } = useMutation({
     mutationFn: (id: string) => deleteConversation(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      route.push('/secure/new');
     },
     onError: (error) => {
       console.error(error);
@@ -82,64 +82,67 @@ export function NavFavorites({
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Chats</SidebarGroupLabel>
       <SidebarMenu>
-        {favorites.map((item) => (
-          <SidebarMenuItem key={item._id}>
-            <SidebarMenuButton asChild>
-              {renamingId === item._id ? (
-                <input
-                  className="px-2 py-1 rounded border w-full"
-                  value={renameValue}
-                  autoFocus
-                  onChange={e => setRenameValue(e.target.value)}
-                  onKeyDown={e => handleRenameKeyDown(e, item._id)}
-                  onBlur={() => setRenamingId(null)}
-                  disabled={renameStatus === "pending"}
-                />
-              ) : (
-                <Link href={`/secure/${item._id}`} title={item.name}>
-                  <span>{item.name}</span>
-                </Link>
-              )}
-            </SidebarMenuButton>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover className="cursor-pointer">
-                  <MoreHorizontal />
-                  <span className="sr-only">More</span>
-                </SidebarMenuAction>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-56 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
-              >
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => handleRenameClick(item)}
-                  disabled={renameStatus === "pending"}
-                >
-                  <Edit2 className=" text-muted-foreground" />
-                  <span>Rename</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={deleteStatus === "pending"}
-                  onClick={() => handleDeleteConversation(item?._id)}
-                  className="cursor-pointer text-orange-700"
-                >
-                  <Trash2 className=" text-orange-700" />
-                  <span className="text-orange-700">Delete</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        ))}
-        <SidebarMenuItem>
+        {status === 'pending' ? <div className="p-4 text-sm text-gray-500">Loading...</div> :
+          <>
+            {conversations?.conversations && conversations?.conversations.map((item: any) => (
+              <SidebarMenuItem key={item._id}>
+                <SidebarMenuButton asChild>
+                  {renamingId === item._id ? (
+                    <input
+                      className="px-2 py-1 rounded border w-full"
+                      value={renameValue}
+                      autoFocus
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => handleRenameKeyDown(e, item._id)}
+                      onBlur={() => setRenamingId(null)}
+                      disabled={renameStatus === "pending"}
+                    />
+                  ) : (
+                    <Link href={`/secure/${item._id}`} title={item.name}>
+                      <span>{item.name}</span>
+                    </Link>
+                  )}
+                </SidebarMenuButton>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuAction showOnHover className="cursor-pointer">
+                      <MoreHorizontal />
+                      <span className="sr-only">More</span>
+                    </SidebarMenuAction>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="w-56 rounded-lg"
+                    side={isMobile ? "bottom" : "right"}
+                    align={isMobile ? "end" : "start"}
+                  >
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => handleRenameClick(item)}
+                      disabled={renameStatus === "pending"}
+                    >
+                      <Edit2 className=" text-muted-foreground" />
+                      <span>Rename</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      disabled={deleteStatus === "pending"}
+                      onClick={() => handleDeleteConversation(item?._id)}
+                      className="cursor-pointer text-orange-700"
+                    >
+                      <Trash2 className=" text-orange-700" />
+                      <span className="text-orange-700">Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            ))}
+          </>}
+        {/* <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
             <MoreHorizontal />
             <span>More</span>
           </SidebarMenuButton>
-        </SidebarMenuItem>
+        </SidebarMenuItem> */}
       </SidebarMenu>
     </SidebarGroup>
   )

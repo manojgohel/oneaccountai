@@ -1,33 +1,57 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { type LucideIcon } from "lucide-react"
 
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import Link from "next/link"
+} from "@/components/ui/sidebar";
+import { DollarSign, Search, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-export function NavMain({
-  items,
-}: {
-  items: {
-    title: string
-    url: string
-    icon: LucideIcon
-    isActive?: boolean
-  }[]
-}) {
+export function NavMain() {
+  const items: any = [
+    {
+      title: "New Chat",
+      url: "/secure/new",
+      icon: Sparkles,
+      isActive: true,
+    },
+    {
+      title: "Search",
+      url: "/secure/search",
+      icon: Search,
+    },
+    {
+      title: "Token Usage",
+      url: "/secure/wallet",
+      icon: DollarSign,
+    },
+    // {
+    //   title: "Developers",
+    //   url: "#",
+    //   icon: BugIcon,
+    //   badge: "10",
+    // },
+  ];
+  const route = useRouter();
+  const handleOnClick = (url: string) => {
+    if (url === "/secure/search") {
+      alert("Search is coming soon!");
+      return;
+    }
+    route.push(url);
+  }
   return (
     <SidebarMenu>
-      {items.map((item) => (
+      {items.map((item: any) => (
         <SidebarMenuItem key={item.title}>
           <SidebarMenuButton asChild isActive={item.isActive}>
-            <Link href={item.url}>
+            <span className="text-start cursor-pointer" onClick={() => handleOnClick(item.url)}>
               <item.icon />
-              <span>{item.title}</span>
-            </Link>
+              <span className="text-start">{item.title}</span>
+            </span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}

@@ -1,21 +1,43 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { getConversationMetaData } from "@/actions/conversation/conversation.action";
 import { NavActions } from "@/components/nav-actions";
 import { Separator } from "@/components/ui/separator";
 import {
     SidebarTrigger
 } from "@/components/ui/sidebar";
 import { useGlobalContext } from "@/providers/context-provider";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import ModelSelection from "./ModelSelection";
 
 export default function HeaderComponent({ title, description, model }: { title?: string, description?: string, model?: string }) {
-    const { setState } = useGlobalContext();
+    const { setState, state } = useGlobalContext();
     useEffect(() => {
         if (model) {
             setState((prev: any) => ({ ...prev, model }));
         }
     }, [model, setState]);
+
+
+
+    const { data: conversationMetaData, isLoading, error } = useQuery({
+        queryKey: ["conversationMetaData"],
+        queryFn: () => getConversationMetaData(state?.conversation?._id),
+    });
+
+    useEffect(() => {
+        if (conversationMetaData?.status) {
+            const convData = conversationMetaData;
+            if (convData.name && convData.name !== title) {
+                setState((prev: any) => ({ ...prev, conversation: { ...prev.conversation, name: convData.name } }));
+            }
+            if (convData.model && convData.model !== model) {
+                setState((prev: any) => ({ ...prev, model: convData.model }));
+            }
+        }
+    }, [conversationMetaData, title, model, setState]);
+
     return (
         <>
             <header className="sticky bottom-0 flex shrink-0 items-center gap-2 px-2 py-2 bg-secondary z-10">
@@ -40,7 +62,7 @@ export default function HeaderComponent({ title, description, model }: { title?:
                                 </div>
                             }
                         </div>
-                    </> : <ModelSelection model={model} description={description} />}
+                    </> : <ModelSelection model={model} description={conversationMetaData?.name ?? description} />}
                 </div>
                 <div className="ml-auto px-3 flex-shrink-0">
                     <NavActions />

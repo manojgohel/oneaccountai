@@ -107,9 +107,9 @@ export default function PromptInputComponent({
                 />
             </PromptInputToolbar>
         </PromptInput>
-        <div className="w-full flex justify-center mt-2">
-            <Label className="text-xs text-center text-muted-foreground">
-                AI can make mistakes. Check important info.
+        <div className="w-full flex justify-center mt-1">
+            <Label className="text-[10px] text-center text-muted-foreground">
+                One Account AI (LLMs) can make mistakes. Check important info.
             </Label>
         </div>
 

@@ -51,6 +51,7 @@ export default function ModelSelection({ model, description }: { model?: string,
     const [selectedModel, setSelectedModel] = React.useState(model || "openai/gpt-4o-mini");
     const [search, setSearch] = React.useState("");
     const [models, setModels] = React.useState<Array<any>>([]);
+    const searchInputRef = React.useRef<HTMLInputElement>(null);
 
     const params = useParams();
 
@@ -146,6 +147,7 @@ export default function ModelSelection({ model, description }: { model?: string,
                         {/* Sticky Search Input */}
                         <div className="p-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 sticky top-0 z-10">
                             <input
+                                ref={searchInputRef}
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -153,6 +155,15 @@ export default function ModelSelection({ model, description }: { model?: string,
                                 className="w-full px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-700 focus:outline-none"
                                 autoFocus
                                 disabled={status === 'pending'}
+                                onBlur={(e) => {
+                                    // Prevent blur if clicking within the dropdown
+                                    const currentTarget = e.currentTarget;
+                                    setTimeout(() => {
+                                        if (document.activeElement !== currentTarget) {
+                                            currentTarget.focus();
+                                        }
+                                    }, 0);
+                                }}
                             />
                         </div>
                         {/* Scrollable List */}

@@ -1,13 +1,7 @@
 "use client"
 
-import {
-  DollarSign,
-  Search,
-  Sparkles
-} from "lucide-react"
 import * as React from "react"
 
-import { getConversations } from "@/actions/conversation/conversation.action"
 import { NavFavorites } from "@/components/nav-favorites"
 import { NavMain } from "@/components/nav-main"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -17,51 +11,19 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { useQuery } from "@tanstack/react-query"
 
-// This is sample data.
-const data = {
-  navMain: [
-    {
-      title: "New Chat",
-      url: "/secure/new",
-      icon: Sparkles,
-      isActive: true,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: Search,
-    },
-    {
-      title: "Token Usage",
-      url: "/secure/wallet",
-      icon: DollarSign,
-    },
-    // {
-    //   title: "Developers",
-    //   url: "#",
-    //   icon: BugIcon,
-    //   badge: "10",
-    // },
-  ],
-  conversations: []
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { status, data: conversations } = useQuery({ queryKey: ['conversations'], queryFn: () => getConversations() });
 
   return (
     <>
       <Sidebar className="border-r-0" {...props}>
         <SidebarHeader>
           <TeamSwitcher />
-          <NavMain items={data.navMain} />
+          <NavMain />
         </SidebarHeader>
         <SidebarContent>
-          {status === 'pending' ? <div className="p-4 text-sm text-gray-500">Loading...</div> :
-            <NavFavorites favorites={conversations?.conversations || []} />
-          }
+          <NavFavorites />
         </SidebarContent>
         <SidebarRail />
       </Sidebar>

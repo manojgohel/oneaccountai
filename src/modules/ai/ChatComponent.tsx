@@ -24,6 +24,7 @@ import { useGreeting } from '@/hooks/use-get-greeting';
 import { cn } from '@/lib/utils';
 import { useGlobalContext } from '@/providers/context-provider';
 import { useChat } from '@ai-sdk/react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     RefreshCcwIcon
 } from 'lucide-react';
@@ -57,12 +58,17 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     const [isUploadingFile, setIsUploadingFile] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-
+    const queryClient = useQueryClient();
     const { messages, sendMessage, status, regenerate, setMessages } = useChat({
         messages: conversations?.messages || [],
         onFinish: () => {
             // scrollToBottom();
             scrollToBottom();
+            if (messages && messages.length < 2) {
+                queryClient.invalidateQueries({ queryKey: ["conversationMetaData"] });
+                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            }
+
         }
     });
 
@@ -192,8 +198,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                 style={{ scrollBehavior: "smooth" }}
                 className="flex-1 overflow-y-auto overscroll-contain px-1 sm:px-2 py-1 scroll-smooth bg-secondary"
             >
-                <div className="max-w-6xl mx-auto px-1 " style={{ scrollBehavior: 'smooth' }} ref={containerRef}
-                >
+                <div className="max-w-6xl mx-auto px-1 h-[75vh]" style={{ scrollBehavior: 'smooth' }}>
                     {/* messages */}
                     {messages && messages.map((message, messageIndex) => (
                         <div key={message.id} className="mb-4">
@@ -376,14 +381,13 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                     ))}
                     {status === 'submitted' && <Loader />}
                     {/* Dummy anchor div at the bottom */}
+                    <div ref={bottomRef} />
                 </div>
-                <div ref={bottomRef} />
-
             </div>
 
             {/* Moved upload UI to PromptInputComponent; keep only the input area here */}
             {messages.length !== 0 && (
-                <div className="sticky bottom-0 z-20" >
+                <div className="sticky bottom-0 z-20 bg-secondary" >
                     <div className="max-w-6xl mx-auto px-1 py-4">
                         <PromptInputComponent
                             handleSubmit={handleSubmit}

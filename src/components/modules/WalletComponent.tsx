@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { getLatestTransactionsByUser } from "@/actions/transaction/transaction.action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,11 +14,7 @@ import { useState } from "react";
 function useTransactionHistory() {
     return useQuery({
         queryKey: ["transactions"],
-        queryFn: async () => {
-            const res = await fetch("/api/transactions");
-            if (!res.ok) throw new Error("Failed to fetch transactions");
-            return res.json();
-        },
+        queryFn: getLatestTransactionsByUser,
         refetchOnWindowFocus: false,
     });
 }
