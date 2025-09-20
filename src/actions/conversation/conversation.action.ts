@@ -1,12 +1,13 @@
 "use server";
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import deepClone from "@/lib/deepClone";
 import dbConnect from "@/lib/mongoose";
 import Conversation from "@/models/Conversation";
 import Message from "@/models/Message";
+import User from "@/models/User";
+import { calculateTokenCharge } from "@/utils/calculateTokenCharge";
 import { objectId } from "@/utils/common";
 import { generateText } from 'ai';
-import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getMessages } from "./message.action";
 
@@ -20,14 +21,14 @@ const generateTitle = async (prompt: string): Promise<string> => {
     return text;
 }
 
-export async function createConversation({ name, messages = [] }: any) {
+export async function createConversation({ name, messages = [], isNew }: any) {
     try {
         // Connect to database
         await dbConnect();
         const cookiesStore = await cookies();
         const userId = cookiesStore.get('_id')?.value;
 
-        const existingConversation = await Conversation.findOne({ userId, messages: { $size: 0 } });
+        const existingConversation = await Conversation.findOne({ userId, name: { $eq: "Unnamed Conversation" } });
         if (existingConversation) {
             return deepClone(existingConversation._id);
         }
@@ -36,6 +37,7 @@ export async function createConversation({ name, messages = [] }: any) {
             userId,
             name: name || `Unnamed Conversation`,
             messages,
+            isNew
         });
 
         // Save the conversation
@@ -56,26 +58,6 @@ export async function saveConversation({ id, content, userId, model: modelName }
         const tokenUsage = content?.totalUsage || null;
         const model = modelName || content?.model || null;
 
-        // Parse the model to extract provider and model name
-        // let providerModel = model;
-        // let modelVariant = '';
-
-        // if (model) {
-        //     // Check if model has a variant (like "openai/gpt-4-mini" -> provider: "openai/gpt-4", variant: "mini")
-        //     const parts = model.split('-');
-        //     if (parts.length > 1) {
-        //         // Extract the last part as variant if it looks like a variant
-        //         const lastPart = parts[parts.length - 1];
-        //         if (lastPart.match(/^(mini|turbo|instruct|preview|vision|\d+[kbm]?)$/i)) {
-        //             modelVariant = lastPart;
-        //             providerModel = parts.slice(0, -1).join('-');
-        //         } else {
-        //             modelVariant = 'default';
-        //         }
-        //     } else {
-        //         modelVariant = 'default';
-        //     }
-        // }
         await Message.create({ ...content, conversationId: id, model });
 
         // Build the update object
@@ -111,16 +93,30 @@ export async function saveConversation({ id, content, userId, model: modelName }
             { new: true } // Return the updated document
         );
 
-        if (updatedConversation?.name === 'Unnamed Conversation' && updatedConversation?.messages?.length === 1) {
-            const name = await generateTitle(JSON.stringify(updatedConversation?.messages[0]?.parts));
+        // If the conversation is new, generate a title based on the first user message
+        if (updatedConversation?.isNewRecord) {
+            const name = await generateTitle(JSON.stringify(content?.parts || ''));
             updatedConversation.name = name;
+            updatedConversation.isNew = false;
             await updatedConversation.save();
         }
+
+        // update user billing
+        const { costUSD } = await calculateTokenCharge(model, tokenUsage);
+
+        // Deduct cost from user's balance
+        if (userId && costUSD) {
+            await User.findOneAndUpdate(
+                { _id: objectId(userId) },
+                { $inc: { balance: -costUSD } }
+            );
+        }
+
+
         if (!updatedConversation) {
             console.log('Conversation not found or user not authorized');
             return { status: false, error: 'Conversation not found or user not authorized' };
         }
-        revalidatePath(`/secure/${updatedConversation._id}`);
         return { status: true, data: deepClone(updatedConversation) };
 
     } catch (error) {
@@ -136,7 +132,7 @@ export async function getConversation(conversationId: string) {
         await dbConnect();
         let conversations: any = await Conversation.findOne({ _id: objectId(conversationId), userId: objectId(userId), deletedAt: null }).lean();
         if (conversations) {
-            const messages = await getMessages({ conversationId: conversations._id.toString(), limit: 5 });
+            const messages = await getMessages({ conversationId: conversations._id.toString(), limit: 500 });
             conversations = { ...conversations, messages: messages.messages || [] };
         }
         return { status: true, data: deepClone(conversations) };

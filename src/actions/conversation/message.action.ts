@@ -1,5 +1,5 @@
 "use server";
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import deepClone from "@/lib/deepClone";
 import dbConnect from "@/lib/mongoose";
 import Message from "@/models/Message";
@@ -7,7 +7,7 @@ import { objectId } from "@/utils/common";
 
 
 
-export async function getMessages({ lastId, limit = 2, conversationId }: { lastId?: string; limit?: number; conversationId: string }): Promise<any> {
+export async function getMessages({ lastId, limit = 500, conversationId }: { lastId?: string; limit?: number; conversationId: string }): Promise<any> {
     try {
         await dbConnect();
 

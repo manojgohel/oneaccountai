@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import mongoose, { Schema } from 'mongoose';
 
@@ -16,6 +16,9 @@ const PartSchema = new Schema({
         type: String,
     },
     data: {
+        type: String,
+    },
+    url: {
         type: String,
     },
     text: {

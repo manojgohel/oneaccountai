@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import mongoose, { Schema } from 'mongoose';
 
@@ -20,10 +20,6 @@ const ConversationSchema = new Schema<any>({
         type: String,
         default: 'Unnamed Conversation'
     },
-    messages: {
-        type: [Schema.Types.Mixed],
-        required: true,
-    },
     tokenUsage: {
         type: TokenUsageSchema,
         required: false
@@ -36,6 +32,7 @@ const ConversationSchema = new Schema<any>({
     model: { type: String, default: 'openai/gpt-4o-mini' },
     systemPrompt: { type: String, default: '' },
     reduceToken: { type: Boolean, default: false },
+    isNewRecord: { type: Boolean, default: true },
     deletedAt: { type: Date, default: null },
 }, {
     timestamps: true

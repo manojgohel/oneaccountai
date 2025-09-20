@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import getAiModels from "@/actions/ai/models";
@@ -7,6 +7,7 @@ import { useGlobalContext } from "@/providers/context-provider";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import * as React from "react";
+import { Badge } from "../ui/badge";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -55,7 +56,7 @@ export default function ModelSelection({ model, description }: { model?: string,
 
     const params = useParams();
 
-    const { setState } = useGlobalContext();
+    const { setState, state }: any = useGlobalContext();
     const { status, data: modelsData, isError } = useQuery({
         queryKey: ['ai-models'],
         queryFn: getAiModels,
@@ -70,6 +71,8 @@ export default function ModelSelection({ model, description }: { model?: string,
         const finalAmount = Number(scaledAmount) * Number(process.env.PRICE_X);
         return finalAmount.toFixed(2);
     }
+
+    const freeAccountModels = ["openai/gpt-3.5-turbo", "openai/gpt-4o-mini", "alibaba/qwen-3-14b"];
 
 
     React.useEffect(() => {
@@ -95,7 +98,12 @@ export default function ModelSelection({ model, description }: { model?: string,
 
     const selected = models.find((m) => m.value === selectedModel);
 
-    const filteredModels = models.filter(
+    const filteredModels = [
+        ...models.filter((model) => freeAccountModels.includes(model.value)),
+        ...models.filter((model) =>
+            !freeAccountModels.includes(model.value)
+        ),
+    ].filter(
         (model) =>
             model.title.toLowerCase().includes(search.toLowerCase()) ||
             model.description.toLowerCase().includes(search.toLowerCase())
@@ -180,6 +188,7 @@ export default function ModelSelection({ model, description }: { model?: string,
                                 filteredModels.map((model) => (
                                     <DropdownMenuItem
                                         key={model.value}
+                                        disabled={!(state?.user?.balance > 0 || freeAccountModels.includes(model.value))}
                                         onSelect={handleModelSelect(model.value)}
                                         className={`flex flex-col items-start gap-1 px-4 py-3 cursor-pointer transition-colors
                                 ${selectedModel === model.value
@@ -187,7 +196,7 @@ export default function ModelSelection({ model, description }: { model?: string,
                                                 : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
                                             }`}
                                     >
-                                        <span className="text-neutral-900 dark:text-neutral-100 truncate w-full">{model.title}</span>
+                                        <span className="text-neutral-900 dark:text-neutral-100 truncate w-full">{model.title} <Badge>{!(state.user?.balance > 0 || freeAccountModels.includes(model.value)) ? "paid" : "free"}</Badge></span>
                                         <span className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 w-full">{model.description}</span>
                                         <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 truncate w-full">
                                             Input: {model.price.input} | Output: {model.price.output} | Thinking: {model.price.thinking} / 1M tokens

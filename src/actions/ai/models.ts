@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use server";
 import deepClone from "@/lib/deepClone";
 import dbConnect from "@/lib/mongoose";
@@ -30,4 +30,10 @@ export default async function getAiModels() {
     );
 
     return deepClone(upsertedModels);
+}
+
+export async function getAiModelPricingByKey(modelKey: string) {
+    await dbConnect();
+    const model = await AiModel.findOne({ modelId: modelKey });
+    return model ? model.pricing : null;
 }

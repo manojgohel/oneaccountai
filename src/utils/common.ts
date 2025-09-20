@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import mime from 'mime-types';
 import mongoose from 'mongoose';
 import { nanoid } from 'nanoid';
 
@@ -24,4 +25,10 @@ function objectId(id: any) {
     }
 }
 
-export { generateConversationId, generateMessageId, objectId };
+
+function getMediaTypeFromUrl(url: string) {
+    return mime.lookup(url) || 'application/octet-stream';
+}
+
+export { generateConversationId, generateMessageId, getMediaTypeFromUrl, objectId };
+

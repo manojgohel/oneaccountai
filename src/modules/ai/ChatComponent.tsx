@@ -1,11 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use client';
 
 import { getMessages } from '@/actions/conversation/message.action';
 import { uploadToS3 } from '@/actions/upload.action';
-import { Action, Actions } from '@/components/actions';
 import { Loader } from '@/components/loader';
 import { Message, MessageContent } from '@/components/message';
 import {
@@ -23,19 +21,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { FILE_URL } from '@/consts/ai.consts';
 import { useGreeting } from '@/hooks/use-get-greeting';
-import { cn } from '@/lib/utils';
 import { useGlobalContext } from '@/providers/context-provider';
+import { getMediaTypeFromUrl } from '@/utils/common';
 import { useChat } from '@ai-sdk/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    ChevronUpIcon,
-    RefreshCcwIcon
+    ChevronUpIcon
 } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import MessageActionsButtons from './MessageActionsButtons';
 import PromptInputComponent from './PromptInputComponent';
-import TokenUsesComponent from './TokenUsesComponent';
 
 
 interface ChatComponentProps {
@@ -200,6 +195,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
             formData.append('file', selectedFile);
 
             const result: any = await uploadToS3(formData);
+            console.log("🚀💡💡💡💡💡=====> ~ ChatComponent.tsx:204 ~ handleFileChange ~ result:", result);
 
             if (result?.success && result.url) {
                 setSelectedImages(prev => [...prev, result.url]);
@@ -230,7 +226,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                 selectedImages.length > 0
                     ? selectedImages.map((file) => ({
                         type: 'file',
-                        mediaType: 'image/png',
+                        mediaType: getMediaTypeFromUrl(file),
                         url: `${FILE_URL}${file}`,
                         filename: file
                     }))
@@ -359,45 +355,89 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                 )}
                             <Message from={message.role} key={message.id || message._id}>
                                 <MessageContent key={`${message.id}-content`}>
-                                    {/* Images grid (if any) */}
-                                    {message.parts?.some((part: any) => part.type === 'image') && (
+                                    {/* Files grid (images, PDFs, and other files) */}
+                                    {message.parts?.some((part: any) => part.type === 'file') && (
                                         <div className="mb-4">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            <div className="flex flex-wrap gap-2">
                                                 {message.parts
-                                                    ?.filter((part: any) => part.type === 'image')
-                                                    .map((part: any, i: number) => (
-                                                        <div
-                                                            key={`${message.id}-image-${i}`}
-                                                            className="relative group overflow-hidden rounded-lg border bg-gray-50 dark:bg-gray-800 cursor-pointer"
-                                                            onClick={() => window.open(part.image, '_blank')}
-                                                        >
-                                                            <img
-                                                                src={part.image}
-                                                                alt={`Message image ${i + 1}`}
-                                                                className="w-full h-48 sm:h-56 lg:h-64 object-cover transition-transform group-hover:scale-105"
-                                                                onLoad={() => {
-                                                                    if (shouldScrollToBottom) {
-                                                                        setTimeout(() => scrollToBottom(), 50);
-                                                                    }
-                                                                }}
-                                                            />
-                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
-                                                                <div className="bg-white/90 dark:bg-black/90 rounded-full p-2">
-                                                                    <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                                    </svg>
+                                                    ?.filter((part: any) => part.type === 'file')
+                                                    .map((part: any, i: number) => {
+                                                        const isImage = part.mediaType?.startsWith('image/') ||
+                                                            part.url?.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
+                                                        const isPDF = part.mediaType === 'application/pdf' ||
+                                                            part.url?.match(/\.pdf$/i);
+
+                                                        return (
+                                                            <div
+                                                                key={`${message.id}-file-${i}`}
+                                                                className="group relative inline-flex items-center gap-2 p-2 rounded-lg border bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer max-w-[200px]"
+                                                            >
+                                                                {/* File Icon */}
+                                                                <div className="flex-shrink-0">
+                                                                    {isImage ? (
+                                                                        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                        </svg>
+                                                                    ) : isPDF ? (
+                                                                        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                                                            <path d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm3.487.012c-.2 0-.33.018-.407.036v2.61c.077.018.201.018.313.018.817.006 1.349-.444 1.349-1.396.006-.83-.479-1.268-1.255-1.268z" />
+                                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM9.498 16.19c-.309.29-.765.42-1.296.42a2.23 2.23 0 0 1-.308-.018v1.426H7v-3.936A7.558 7.558 0 0 1 8.219 14c.557 0 .953.106 1.22.319.254.202.426.533.426.923-.001.392-.131.723-.367.948zm3.807 1.355c-.42.349-1.059.515-1.84.515-.468 0-.799-.03-1.024-.06v-3.917A7.947 7.947 0 0 1 11.66 14c.757 0 1.249.136 1.633.426.415.308.675.799.675 1.504 0 .763-.279 1.29-.663 1.615zM17 14.77h-1.532v.911H16.9v.734h-1.432v1.604h-.906V14.03H17v.74zM14 9h-1V4l5 5h-4z" />
+                                                                        </svg>
+                                                                    ) : (
+                                                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                        </svg>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Filename */}
+                                                                <span className="text-xs text-gray-700 dark:text-gray-300 truncate flex-1 min-w-0">
+                                                                    {part.filename || (isImage ? 'Image' : isPDF ? 'PDF Document' : 'Document')}
+                                                                </span>
+
+                                                                {/* Actions */}
+                                                                <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    {/* View button for images and PDFs */}
+                                                                    {(isImage || isPDF) && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                window.open(part.url, '_blank');
+                                                                            }}
+                                                                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                                                            title={isImage ? "View Image" : "View PDF"}
+                                                                        >
+                                                                            <svg className="w-3 h-3 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                            </svg>
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* Download button */}
+                                                                    <a
+                                                                        href={part.url}
+                                                                        download={part.filename || 'document'}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                                                        title="Download File"
+                                                                    >
+                                                                        <svg className="w-3 h-3 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                        </svg>
+                                                                    </a>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    ))
+                                                        );
+                                                    })
                                                 }
                                             </div>
                                         </div>
                                     )}
 
-                                    {/* Text and other parts (exclude images) */}
+                                    {/* Text and other parts (exclude files) */}
                                     {message.parts
-                                        ?.filter((part: any) => part.type !== 'image')
+                                        ?.filter((part: any) => part.type !== 'image' && part.type !== 'file')
                                         .map((part: any, i: number) => {
                                             const isLastMessage = messageIndex === allMessages.length - 1;
                                             switch (part.type) {
@@ -407,29 +447,12 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                                             <Response>{part.text}</Response>
                                                             {message.role === 'assistant' && (
                                                                 <>
-                                                                    <Actions className={cn(
-                                                                        "mt-2 transition-opacity duration-200 group-hover:opacity-100",
-                                                                        isLastMessage ? "opacity-100" : "opacity-0 "
-                                                                    )}>
-                                                                        <Action
-                                                                            className='cursor-pointer'
-                                                                            onClick={() => regenerate()}
-                                                                            tooltip="Retry"
-                                                                            label="Retry"
-                                                                            disabled={!isLastMessage || status === 'streaming'}
-                                                                        >
-                                                                            <RefreshCcwIcon className="size-3" />
-                                                                        </Action>
-                                                                        {/* Token Usage Display */}
-                                                                        <TokenUsesComponent
-                                                                            totalUsage={(message as any).totalUsage}
-                                                                            open={tokenPopoverOpen[message.id] || false}
-                                                                            onOpenChange={(open) => setTokenPopoverOpen(prev => ({
-                                                                                ...prev,
-                                                                                [message.id]: open
-                                                                            }))}
-                                                                        />
-                                                                    </Actions>
+                                                                    <MessageActionsButtons
+                                                                        regenerate={regenerate}
+                                                                        isLastMessage={isLastMessage}
+                                                                        message={message}
+                                                                        tokenPopoverOpen={tokenPopoverOpen}
+                                                                        setTokenPopoverOpen={setTokenPopoverOpen} />
                                                                 </>
                                                             )}
                                                         </div>
@@ -448,20 +471,6 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                                                 </Reasoning>
                                                             }
                                                         </>
-                                                    );
-                                                case 'file':
-                                                    return (
-                                                        <Link target='_blank' href={`${part.url}`} className="cursor-pointer w-50 h-50 relative overflow-hidden rounded-md border border-gray-200 group-hover:opacity-70">
-                                                            <Image
-                                                                key={(part.filename || 'image') + i}
-                                                                src={`${part.url ?? part.data}`}
-                                                                alt={part.filename ?? 'image'}
-                                                                width={500}
-                                                                height={500}
-                                                                className="rounded-md"
-                                                                unoptimized
-                                                            />
-                                                        </Link>
                                                     );
                                                 default:
                                                     return null;

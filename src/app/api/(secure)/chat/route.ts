@@ -23,17 +23,29 @@ export async function POST(req: Request) {
     }
     const result = streamText({
         model: webSearch ? 'perplexity/sonar' : model,
-        system: conversation?.data?.systemPrompt || 'You are a helpful assistant.',
+        system: conversation?.data?.systemPrompt || 'You are a helpful assistant. developed by OneAccount AI.',
         messages: modelMessages,
         async onFinish(response) {
             const { totalUsage, content } = response;
 
             const userMessage = modelMessages[messages.length - 1];
+            const parts = Array.isArray(userMessage?.content)
+                ? userMessage.content.map((part: any) => {
+                    if (part.type === 'file' && part.data) {
+                        // Replace 'data' with 'url' for file type
+                        const { data, ...rest } = part;
+                        return { ...rest, url: part.data };
+                    }
+                    return part;
+                })
+                : userMessage?.content || [];
+
             const requestMessage = {
-                parts: userMessage?.content ? userMessage.content : [],
+                parts,
                 id: nanoid(),
                 role: userMessage?.role,
             };
+            console.log("🚀💡💡💡💡💡=====> ~ route.ts:37 ~ onFinish ~ requestMessage:", JSON.stringify(requestMessage, null, 2));
 
             const responseMessage = {
                 parts: content ? content : [],
@@ -45,7 +57,7 @@ export async function POST(req: Request) {
             saveMessage({ id: conversationId, requestMessage, responseMessage, userId, model });
         },
         onError(error) {
-            console.error('Error in chat route:', error);
+            console.error('Error in chat route:', JSON.stringify(error, null, 2));
         }
     });
 

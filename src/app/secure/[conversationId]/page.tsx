@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { createConversation, getConversation, getConversationMetaData } from "@/actions/conversation/conversation.action";
 import HeaderComponent from "@/components/common/HeaderComponent";
 import ChatComponent from "@/modules/ai/ChatComponent";
@@ -35,7 +35,7 @@ export default async function SecurePage({ params }: any) {
   const conversationId = paramsStore.conversationId;
 
   if (conversationId === 'new') {
-    const newConversationId = await createConversation({ userId: 'demo-user' });
+    const newConversationId = await createConversation({ name: "Unnamed Conversation" });
     return redirect(`/secure/${newConversationId}`);
   }
 
