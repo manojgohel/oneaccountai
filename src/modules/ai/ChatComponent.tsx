@@ -225,7 +225,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
 
         setShouldScrollToBottom(true);
 
-        const parts: any = [
+        const parts: any[] = [
             ...(
                 selectedImages.length > 0
                     ? selectedImages.map((file) => ({
@@ -243,7 +243,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
             {
                 role: 'user',
                 parts
-            },
+            } as any,
             {
                 body: {
                     model: state?.model || 'openai/gpt-4.1-mini',
@@ -277,7 +277,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     const greeting = useGreeting();
 
     return (
-        <div className="flex min-h-full flex-col bg-secondary pb-10">
+        <div className="flex min-h-full flex-col bg-secondary">
             {allMessages.length === 0 && status !== 'streaming' && (
                 <div className="flex flex-1 items-center justify-center w-full min-h-[60vh]">
                     <div className="w-full max-w-4xl px-4">
@@ -315,7 +315,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                 disabled={isLoadingMore}
                                 variant="outline"
                                 size="sm"
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 cursor-pointer"
                             >
                                 {isLoadingMore ? (
                                     <>
