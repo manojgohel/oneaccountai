@@ -69,8 +69,7 @@ export default function WalletComponent() {
     const handleDeposit = async () => {
         setSuccess(null);
         try {
-            const response = await deposit.mutateAsync();
-            console.log("🚀💡💡💡💡💡=====> ~ WalletComponent.tsx:80 ~ handleDeposit ~ response:", response);
+            await deposit.mutateAsync();
             setSuccess("Deposit initiated!");
         } catch {
             setSuccess("Deposit failed.");

@@ -3,10 +3,12 @@
 import deepClone from "@/lib/deepClone";
 import dbConnect from "@/lib/mongoose";
 import Conversation from "@/models/Conversation";
+import Message from "@/models/Message";
 import { objectId } from "@/utils/common";
 import { generateText } from 'ai';
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { getMessages } from "./message.action";
 
 const generateTitle = async (prompt: string): Promise<string> => {
     const { text } = await generateText({
@@ -47,12 +49,12 @@ export async function createConversation({ name, messages = [] }: any) {
     }
 }
 
-export async function saveConversation({ id, content, userId }: any) {
+export async function saveConversation({ id, content, userId, model: modelName }: any) {
     try {
         // Connect to database
         await dbConnect();
         const tokenUsage = content?.totalUsage || null;
-        const model = content?.model || null;
+        const model = modelName || content?.model || null;
 
         // Parse the model to extract provider and model name
         // let providerModel = model;
@@ -74,11 +76,12 @@ export async function saveConversation({ id, content, userId }: any) {
         //         modelVariant = 'default';
         //     }
         // }
+        await Message.create({ ...content, conversationId: id, model });
 
         // Build the update object
         const updateFields: any = {
             model: model,
-            $push: { messages: content },
+            // $push: { messages: content },
             $inc: {
                 'tokenUsage.inputTokens': tokenUsage?.inputTokens || 0,
                 'tokenUsage.outputTokens': tokenUsage?.outputTokens || 0,
@@ -87,6 +90,7 @@ export async function saveConversation({ id, content, userId }: any) {
                 'tokenUsage.cachedInputTokens': tokenUsage?.cachedInputTokens || 0,
             }
         };
+
 
         // Add tokenUsageByModel increments if model exists
         if (model && tokenUsage) {
@@ -130,7 +134,11 @@ export async function getConversation(conversationId: string) {
         const cookiesStore = await cookies();
         const userId = cookiesStore.get('_id')?.value;
         await dbConnect();
-        const conversations = await Conversation.findOne({ _id: objectId(conversationId), userId: objectId(userId), deletedAt: null }).lean();
+        let conversations: any = await Conversation.findOne({ _id: objectId(conversationId), userId: objectId(userId), deletedAt: null }).lean();
+        if (conversations) {
+            const messages = await getMessages({ conversationId: conversations._id.toString(), limit: 5 });
+            conversations = { ...conversations, messages: messages.messages || [] };
+        }
         return { status: true, data: deepClone(conversations) };
     } catch (error) {
         console.error('Error fetching conversations:', error);

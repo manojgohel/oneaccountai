@@ -35,7 +35,6 @@ export async function POST(req: Request) {
                 role: userMessage?.role,
             };
 
-
             const responseMessage = {
                 parts: content ? content : [],
                 id: nanoid(),
@@ -43,7 +42,7 @@ export async function POST(req: Request) {
                 totalUsage,
                 model
             };
-            saveMessage({ id: conversationId, requestMessage, responseMessage, userId });
+            saveMessage({ id: conversationId, requestMessage, responseMessage, userId, model });
         },
         onError(error) {
             console.error('Error in chat route:', error);
