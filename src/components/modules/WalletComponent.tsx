@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import { getLatestTransactionsByUser } from "@/actions/transaction/transaction.action";
@@ -26,7 +26,7 @@ function useDeposit() {
     const bodyPayload = {
         "product_cart": [
             {
-                "product_id": "pdt_JaSHimijvPTWxcZ3oxD2e",
+                "product_id": "pdt_q3HgpB3QzMJjfN8fF7GqK",
                 "quantity": 1,
                 "paymentCurrency": "USD",
             }
