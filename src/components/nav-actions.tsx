@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useQuery } from "@tanstack/react-query";
@@ -17,15 +16,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
 import { useGlobalContext } from "@/providers/context-provider";
 import { useRouter } from "next/navigation";
 import { ModeToggleComponent } from "./common/ModeToggleComponent";
@@ -47,7 +37,7 @@ const data = [
     {
       label: "Logout",
       icon: LogOut,
-      link: "/secure/logout"
+      link: "/logout"
     },
   ],
 ]
@@ -67,10 +57,10 @@ export function NavActions() {
     if (userData?.user) {
       setState((prev) => ({ ...prev, user: userData.user }));
     }
-  }, [userData]);
+  }, [userData, setState]);
 
   const handleClick = async (link: string) => {
-    if (link === "/secure/logout") {
+    if (link === "/logout") {
       // Handle logout logic here
       await logout();
       setState((prev) => ({ ...prev, user: null }));
@@ -81,53 +71,49 @@ export function NavActions() {
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center">
       <ModeToggleComponent />
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="cursor-pointer data-[state=open]:bg-accent h-7 w-7"
+            className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            <User2 className="cursor-pointer" />
+            <User2 className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-56 overflow-hidden rounded-lg p-0"
+          className="w-48 p-1 shadow-md border bg-white dark:bg-slate-900"
           align="end"
         >
-          <Sidebar collapsible="none" className="bg-transparent">
-            <SidebarContent>
-              <SidebarGroup key={"username-1"} className="border-b last:border-none">
-                <SidebarGroupContent className="gap-0">
-                  <SidebarMenu>
-                    <SidebarMenuItem key={"username-2"}>
-                      <SidebarMenuButton className="cursor-pointer" >
-                        <User /> <span>{status === "pending" ? "Loading..." : userData?.user?.name || userData?.user?.email}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
+          <div className="space-y-1">
+            {/* User Info */}
+            <div className="px-3 py-2 border-b">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-slate-500" />
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {status === "pending" ? "Loading..." : userData?.user?.name || userData?.user?.email}
+                </span>
+              </div>
+            </div>
 
-              {data && data.map((group, index) => (
-                <SidebarGroup key={index} className="border-b last:border-none">
-                  <SidebarGroupContent className="gap-0">
-                    <SidebarMenu>
-                      {group.map((item: any, index: number) => (
-                        <SidebarMenuItem key={index}>
-                          <SidebarMenuButton onClick={() => handleClick(item.link)} className="cursor-pointer" >
-                            <item.icon /> <span>{item.label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              ))}
-            </SidebarContent>
-          </Sidebar>
+            {/* Menu Items */}
+            {data?.map((group, groupIndex) => (
+              <div key={`group-${groupIndex}`} className="space-y-1">
+                {group.map((item: any, itemIndex: number) => (
+                  <button
+                    key={`item-${groupIndex}-${itemIndex} `}
+                    onClick={() => handleClick(item.link)}
+                    className="w-full flex items-center cursor-pointer gap-2 px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors"
+                  >
+                    <item.icon className="h-4 w-4 text-slate-500" />
+                    <span className="text-slate-700 dark:text-slate-300">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
         </PopoverContent>
       </Popover>
     </div>

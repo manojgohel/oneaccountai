@@ -79,6 +79,17 @@ const LoaderIcon = ({ size = 16 }: LoaderIconProps) => (
   </svg>
 );
 
+// Typing Animation Component
+const TypingDots = ({ className }: { className?: string }) => (
+  <div className={cn("flex items-center space-x-1", className)}>
+    <div className="flex space-x-1">
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s] [animation-duration:1.4s]"></div>
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s] [animation-duration:1.4s]"></div>
+      <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-duration:1.4s]"></div>
+    </div>
+  </div>
+);
+
 export type LoaderProps = HTMLAttributes<HTMLDivElement> & {
   size?: number;
 };
@@ -92,5 +103,19 @@ export const Loader = ({ className, size = 16, ...props }: LoaderProps) => (
     {...props}
   >
     <LoaderIcon size={size} />
+  </div>
+);
+
+// New Typing Loader Component
+export const TypingLoader = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'inline-flex items-start justify-start text-gray-500 dark:text-gray-400 px-4 py-2',
+      className
+    )}
+    {...props}
+  >
+    {/* <span className="text-sm mr-2">typing</span> */}
+    <TypingDots />
   </div>
 );

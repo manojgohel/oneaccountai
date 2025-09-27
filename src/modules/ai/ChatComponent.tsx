@@ -4,7 +4,7 @@
 
 import { getMessages } from '@/actions/conversation/message.action';
 import { uploadToS3 } from '@/actions/upload.action';
-import { Loader } from '@/components/loader';
+import { Loader, TypingLoader } from '@/components/loader';
 import { Message, MessageContent } from '@/components/message';
 import {
     Reasoning,
@@ -48,6 +48,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [isStreaming, setIsStreaming] = useState(false);
 
     const { state, setState } = useGlobalContext();
 
@@ -68,7 +69,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                 queryClient.invalidateQueries({ queryKey: ["conversationMetaData"] });
                 queryClient.invalidateQueries({ queryKey: ['conversations'] });
             }
-        }
+        },
     });
 
     // Initialize conversation data
@@ -80,7 +81,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
             if (conversationMessages && conversationMessages.length > 0) {
                 setAllMessages(conversationMessages);
                 setMessages(conversationMessages);
-                setPaginationCursor(conversationMessages[0]._id || conversationMessages[0].id);
+                setPaginationCursor(conversationMessages[0]._id ?? conversationMessages[0].id);
 
                 setTimeout(() => {
                     scrollToBottom();
@@ -90,14 +91,19 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
         }
     }, [conversations, setState, setMessages, isInitialized]);
 
+    // Handle loading state for different scenarios
+    const isMessagesLoading = status === 'submitted' || (!isInitialized && conversations);
+    const hasMessages = allMessages.length > 0;
+    const isNewConversation = !conversations || (conversations?.messages?.length === 0);
+
     // Query for loading more messages
     const { data: paginatedData, refetch: refetchMessages, isFetching } = useQuery({
         queryKey: ['paginated-messages', conversationId, paginationCursor],
         enabled: false,
         queryFn: () => getMessages({
-            conversationId: conversationId || '',
+            conversationId: conversationId ?? '',
             limit: 10,
-            lastId: paginationCursor || ""
+            lastId: paginationCursor ?? ""
         }),
     });
 
@@ -127,9 +133,9 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                     return updatedMessages;
                 });
 
-                setHasMoreMessages(result.data.pagination?.hasMore || false);
+                setHasMoreMessages(result.data.pagination?.hasMore ?? false);
                 if (result.data.pagination?.hasMore) {
-                    setPaginationCursor(newMessages[0]._id || newMessages[0].id);
+                    setPaginationCursor(newMessages[0]._id ?? newMessages[0].id);
                 } else {
                     setPaginationCursor(null);
                 }
@@ -162,23 +168,29 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     useEffect(() => {
         if (messages.length > allMessages.length && !isLoadingMore) {
             setAllMessages(messages);
-        }
-    }, [messages, allMessages.length, isLoadingMore]);
-
-    // Handle scrolling
-    useEffect(() => {
-        if (shouldScrollToBottom && !isLoadingMore) {
-            scrollToBottom();
-        }
-    }, [allMessages, shouldScrollToBottom, isLoadingMore]);
-
-    useEffect(() => {
-        if (shouldScrollToBottom && !isLoadingMore) {
-            if (status === 'streaming' || status === 'submitted') {
-                scrollToBottom();
+            // Trigger scroll when new messages arrive
+            if (shouldScrollToBottom) {
+                setTimeout(() => scrollToBottom(), 100);
             }
         }
-    }, [messages, status, isLoadingMore, shouldScrollToBottom]);
+    }, [messages, allMessages.length, isLoadingMore, shouldScrollToBottom]);
+
+    // Removed duplicate scroll effect - handled in comprehensive scroll management below
+
+    // Track streaming state
+    useEffect(() => {
+        setIsStreaming(status === 'streaming');
+    }, [status]);
+
+    // Single comprehensive scroll management - prevents multiple scroll effects
+    useEffect(() => {
+        if (shouldScrollToBottom && !isLoadingMore && containerRef.current) {
+            // Use immediate scroll without smooth behavior to prevent conflicts
+            containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        }
+    }, [allMessages.length, shouldScrollToBottom, isLoadingMore]);
+
+    // Removed duplicate scroll effect - handled in comprehensive scroll management above
 
     // File upload handlers
     const handleImageSelect = () => {
@@ -220,6 +232,8 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
         if (!trimmed) return;
 
         setShouldScrollToBottom(true);
+        // Immediately scroll to bottom when user submits
+        setTimeout(() => scrollToBottom(), 50);
 
         const parts: any[] = [
             ...(
@@ -242,7 +256,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
             } as any,
             {
                 body: {
-                    model: state?.model || 'openai/gpt-4.1-mini',
+                    model: state?.model ?? 'openai/gpt-4.1-mini',
                     webSearch,
                     conversationId
                 }
@@ -257,61 +271,109 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     const bottomRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
-        if (bottomRef.current) {
-            setTimeout(() => {
-                bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            }, 50);
-        }
+        if (!containerRef.current) return;
+
+        const container = containerRef.current;
+
+        // Immediate scroll to bottom to prevent multiple scroll effects
+        container.scrollTop = container.scrollHeight;
     };
 
     const scrollToTop = () => {
         if (containerRef.current) {
-            containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            containerRef.current.scrollTop = 0;
         }
     };
 
     const greeting = useGreeting();
 
     return (
-        <div className="flex min-h-full flex-col bg-secondary">
-            {allMessages.length === 0 && status !== 'streaming' && (
-                <div className="flex flex-1 items-center justify-center w-full min-h-[60vh]">
-                    <div className="w-full max-w-4xl px-4">
-                        <h1 className='text-center p-5 text-3xl'>{greeting}, {state?.user?.name || state?.user?.email || "Guest"}</h1>
-                        <PromptInputComponent
-                            handleSubmit={handleSubmit}
-                            setInput={setInput}
-                            input={input}
-                            status={status}
-                            webSearch={webSearch}
-                            setWebSearch={setWebSearch}
-                            onImageSelect={handleImageSelect}
-                            fileInputRef={fileInputRef}
-                            isUploadingFile={isUploadingFile}
-                            selectedImages={selectedImages}
-                            removeImage={removeImage}
-                            handleFileChange={handleFileChange}
-                        />
+        <div className="flex flex-1 flex-col bg-secondary h-full overflow-hidden">
+            {/* Loading Messages - Show when loading saved messages */}
+            {isMessagesLoading && !hasMessages && (
+                <div className="flex flex-1 items-center justify-center w-full min-h-[40vh]">
+                    <div className="flex flex-col items-center space-y-4">
+                        <div className="relative">
+                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 dark:border-blue-800"></div>
+                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-transparent border-t-blue-500 absolute top-0 left-0"></div>
+                        </div>
+                        <div className="text-center space-y-1">
+                            <p className="text-slate-600 dark:text-slate-400 font-medium">
+                                {isNewConversation ? 'Initializing chat...' : 'Loading messages...'}
+                            </p>
+                            <div className="flex space-x-1">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Messages Container */}
-            <div
-                ref={containerRef}
-                style={{ scrollBehavior: "smooth" }}
-                className="flex-1 overflow-y-auto overscroll-contain px-1 sm:px-2 py-1 scroll-smooth bg-secondary"
-            >
-                <div className="max-w-6xl mx-auto px-1 min-h-[75vh]" style={{ scrollBehavior: 'smooth' }}>
+            {/* No Messages Welcome Screen - Show when no messages and not loading */}
+            {!isMessagesLoading && !hasMessages && status !== 'streaming' && (
+                <div className="flex flex-1 items-center justify-center w-full min-h-[40vh]">
+                    <div className="w-full max-w-4xl px-4">
+                        <div className="text-center space-y-4">
+                            <div className="space-y-3">
+                                <div className="h-12 w-12 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl">
+                                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                </div>
+                                <h1 className='text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'>
+                                    {greeting}, {state?.user?.name ?? state?.user?.email ?? "Guest"}
+                                </h1>
+                                <p className="text-slate-600 dark:text-slate-400 text-base max-w-2xl mx-auto">
+                                    Start a conversation with AI. Ask questions, get help, or explore new ideas.
+                                </p>
+                            </div>
+                            <PromptInputComponent
+                                handleSubmit={handleSubmit}
+                                setInput={setInput}
+                                input={input}
+                                status={isMessagesLoading ? 'loading' : status}
+                                webSearch={webSearch}
+                                setWebSearch={setWebSearch}
+                                onImageSelect={handleImageSelect}
+                                fileInputRef={fileInputRef}
+                                isUploadingFile={isUploadingFile}
+                                selectedImages={selectedImages}
+                                removeImage={removeImage}
+                                handleFileChange={handleFileChange}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Messages Container - Only show when there are messages */}
+            {allMessages.length > 0 && (
+                <div
+                    ref={containerRef}
+                    className="flex-1 overflow-y-auto px-1 sm:px-2 py-1 bg-secondary"
+                    style={{
+                        height: "calc(100vh - 120px)",
+                        minHeight: "350px"
+                    }}
+                    onScroll={(e) => {
+                        // Check if user is near bottom with better threshold
+                        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                        const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+                        setShouldScrollToBottom(isNearBottom);
+                    }}
+                >
+                <div className="max-w-6xl mx-auto px-1 min-h-[75vh] pb-8" style={{ scrollBehavior: 'smooth' }}>
                     {/* Load More Button */}
                     {hasMoreMessages && allMessages.length > 0 && (
-                        <div className="flex justify-center py-4">
+                        <div className="flex justify-center py-3">
                             <Button
                                 onClick={handleLoadMore}
                                 disabled={isLoadingMore}
                                 variant="outline"
                                 size="sm"
-                                className="flex items-center gap-2 cursor-pointer"
+                                className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-sm border-slate-200 dark:border-slate-700"
                             >
                                 {isLoadingMore ? (
                                     <>
@@ -329,8 +391,8 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                     )}
 
                     {/* Messages */}
-                    {allMessages && allMessages.map((message, messageIndex) => (
-                        <div key={message.id || message._id} className="mb-4">
+                    {allMessages?.map((message, messageIndex) => (
+                        <div key={message.id ?? message._id} className="mb-4">
                             {message.role === 'assistant' && message.parts?.filter(
                                 (part: any) => part.type === 'source-url',
                             ).length > 0 && (
@@ -353,7 +415,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                         ))}
                                     </Sources>
                                 )}
-                            <Message from={message.role} key={message.id || message._id}>
+                            <Message from={message.role} key={message.id ?? message._id}>
                                 <MessageContent key={`${message.id}-content`}>
                                     {/* Files grid (images, PDFs, and other files) */}
                                     {message.parts?.some((part: any) => part.type === 'file') && (
@@ -446,14 +508,13 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                                                         <div key={`${message.id}-${i}`} >
                                                             <Response>{part.text}</Response>
                                                             {message.role === 'assistant' && (
-                                                                <>
-                                                                    <MessageActionsButtons
-                                                                        regenerate={regenerate}
-                                                                        isLastMessage={isLastMessage}
-                                                                        message={message}
-                                                                        tokenPopoverOpen={tokenPopoverOpen}
-                                                                        setTokenPopoverOpen={setTokenPopoverOpen} />
-                                                                </>
+                                                                <MessageActionsButtons
+                                                                    regenerate={regenerate}
+                                                                    isLastMessage={isLastMessage}
+                                                                    message={message}
+                                                                    tokenPopoverOpen={tokenPopoverOpen}
+                                                                    setTokenPopoverOpen={setTokenPopoverOpen}
+                                                                    status={status} />
                                                             )}
                                                         </div>
                                                     );
@@ -481,17 +542,22 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                         </div>
                     ))}
 
-                    {status === 'submitted' && <Loader />}
+                    {status === 'submitted' && (
+                        <div className="flex items-start justify-start py-4">
+                            <TypingLoader />
+                        </div>
+                    )}
 
-                    {/* Dummy anchor div at the bottom */}
-                    <div ref={bottomRef} />
+                    {/* Dummy anchor div at the bottom with proper spacing */}
+                    <div ref={bottomRef} className="h-20" />
                 </div>
-            </div>
+                </div>
+            )}
 
             {/* Input area */}
             {allMessages.length !== 0 && (
-                <div className="sticky bottom-0 z-20 bg-secondary">
-                    <div className="max-w-6xl mx-auto px-1 py-4">
+                <div className="sticky bottom-0 z-20">
+                    <div className="max-w-6xl mx-auto px-1 py-2">
                         <PromptInputComponent
                             handleSubmit={handleSubmit}
                             setInput={setInput}

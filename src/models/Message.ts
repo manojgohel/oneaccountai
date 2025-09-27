@@ -30,7 +30,7 @@ const PartSchema = new Schema({
 const MessageSchema = new Schema<any>({
     conversationId: {
         type: Schema.Types.ObjectId,
-        ref: 'conversations',
+        ref: 'Conversation',
         required: true
     },
     parts: {

@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/sidebar";
 import { DollarSign, Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import SearchModal from "./SearchModal";
 
 export function NavMain() {
   const items: any = [
@@ -38,12 +40,20 @@ export function NavMain() {
   const route = useRouter();
   const handleOnClick = (url: string) => {
     if (url === "/secure/search") {
-      alert("Search is coming soon!");
+      setIsSearchOpen(true);
       return;
     }
     route.push(url);
   }
+
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   return (
+    <>
+    <SearchModal
+                isOpen={isSearchOpen}
+                onClose={() => setIsSearchOpen(false)}
+            />
     <SidebarMenu>
       {items.map((item: any) => (
         <SidebarMenuItem key={item.title}>
@@ -56,5 +66,6 @@ export function NavMain() {
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
+    </>
   )
 }

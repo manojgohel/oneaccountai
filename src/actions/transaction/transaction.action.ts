@@ -29,7 +29,7 @@ export async function getTransactionsByUser(userId: string) {
 // Get the 5 latest transactions for a user
 export async function getLatestTransactionsByUser() {
     const cookiesStore = await cookies();
-    const userId = cookiesStore.get("userId")?.value;
+    const userId = cookiesStore.get("_id")?.value;
     if (!userId) throw new Error("User not authenticated");
     await dbConnect();
     const transactions = await Transaction.find({ userId })

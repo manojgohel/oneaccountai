@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getConversationMetaData } from "@/actions/conversation/conversation.action";
 import { NavActions } from "@/components/nav-actions";
 import { Separator } from "@/components/ui/separator";
@@ -11,7 +10,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import ModelSelection from "./ModelSelection";
 
-export default function HeaderComponent({ title, description, model }: { title?: string, description?: string, model?: string }) {
+interface HeaderComponentProps {
+    readonly title?: string;
+    readonly description?: string;
+    readonly model?: string;
+}
+
+export default function HeaderComponent({ title, description, model }: HeaderComponentProps) {
     const { setState, state } = useGlobalContext();
     useEffect(() => {
         if (model) {
@@ -21,7 +26,7 @@ export default function HeaderComponent({ title, description, model }: { title?:
 
 
 
-    const { data: conversationMetaData, isLoading, error } = useQuery({
+    const { data: conversationMetaData } = useQuery({
         queryKey: ["conversationMetaData"],
         queryFn: () => getConversationMetaData(state?.conversation?._id),
     });
@@ -40,20 +45,22 @@ export default function HeaderComponent({ title, description, model }: { title?:
 
     return (
         <>
-            <header className="sticky bottom-0 flex shrink-0 items-center gap-2 px-2 py-2 bg-secondary z-10">
-                <div className="flex flex-1 items-center gap-2 px-1 min-w-0 overflow-hidden">
-                    <SidebarTrigger className="cursor-pointer flex-shrink-0" />
+            <header className="sticky top-0 flex shrink-0 items-center gap-2 px-3 py-2 z-10 bg-background/95 backdrop-blur-xl border-b border-border/50 shadow-sm">
+                <div className="flex flex-1 items-center gap-3 px-1 min-w-0 overflow-hidden">
+                    <SidebarTrigger className="cursor-pointer flex-shrink-0 hover:bg-accent/80 transition-colors duration-200 rounded-lg p-1" />
                     <Separator
                         orientation="vertical"
-                        className="cursor-pointer mr-2 data-[orientation=vertical]:h-4 flex-shrink-0"
+                        className="cursor-pointer mr-1 data-[orientation=vertical]:h-6 flex-shrink-0 bg-border/60"
                     />
-                    {title ? <>
+                    {title ?
+                    <>
                         <div className="flex flex-col min-w-0 flex-shrink overflow-hidden" style={{ maxWidth: 'calc(100vw - 200px)' }}>
-                            <div className="font-semibold text-xs text-neutral-900 dark:text-neutral-100 truncate">
+                            <div className="font-semibold text-sm text-neutral-900 dark:text-neutral-100 truncate flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 animate-pulse"></div>
                                 {title}
                             </div>
                             {description &&
-                                <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                                <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate ml-4">
                                     {description
                                         ?.split(" ")
                                         .slice(0, 5)
@@ -64,7 +71,7 @@ export default function HeaderComponent({ title, description, model }: { title?:
                         </div>
                     </> : <ModelSelection model={model} description={conversationMetaData?.name ?? description} />}
                 </div>
-                <div className="ml-auto px-3 flex-shrink-0">
+                <div className="ml-auto px-2 flex-shrink-0">
                     <NavActions />
                 </div>
             </header>

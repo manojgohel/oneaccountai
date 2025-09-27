@@ -42,11 +42,11 @@ export default async function SecurePage({ params }: any) {
   const conversations = await getConversation(conversationId);
 
   return (
-    <>
+    <div className="flex flex-col h-screen overflow-hidden">
       <HeaderComponent model={conversations?.data?.model} description={conversations?.data?.name} />
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <ChatComponent conversationId={conversationId} conversations={conversations?.data} />
       </div>
-    </>
+    </div>
   )
 }

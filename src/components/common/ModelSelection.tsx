@@ -8,12 +8,16 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import * as React from "react";
 import { Badge } from "../ui/badge";
+import { Input } from "../ui/input";
+import { Separator } from "../ui/separator";
+import { Skeleton } from "../ui/skeleton";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { Search, Zap, Clock, Star, DollarSign, Check } from "lucide-react";
 
 // const models = [
 //     {
@@ -57,7 +61,7 @@ export default function ModelSelection({ model, description }: { model?: string,
     const params = useParams();
 
     const { setState, state }: any = useGlobalContext();
-    const { status, data: modelsData, isError } = useQuery({
+    const { status, data: modelsData } = useQuery({
         queryKey: ['ai-models'],
         queryFn: getAiModels,
         staleTime: 1000 * 60 * 5, // 5 minutes
@@ -94,7 +98,7 @@ export default function ModelSelection({ model, description }: { model?: string,
                 setState((prev: any) => ({ ...prev, model: formattedModels[0].value }));
             }
         }
-    }, [status, modelsData, selectedModel]);
+    }, [status, modelsData, selectedModel, setState]);
 
     const selected = models.find((m) => m.value === selectedModel);
 
@@ -118,6 +122,21 @@ export default function ModelSelection({ model, description }: { model?: string,
         setSelectedModel(value);
         setState((prev: any) => ({ ...prev, model: value }));
         updateConversationModel({ conversationId: params?.conversationId as string, model: value });
+    };
+
+    const getModelIcon = (modelValue: string) => {
+        if (modelValue.includes('gpt-4')) return <Zap className="w-4 h-4 text-blue-500" />;
+        if (modelValue.includes('gpt-3.5')) return <Clock className="w-4 h-4 text-green-500" />;
+        if (modelValue.includes('claude')) return <Star className="w-4 h-4 text-purple-500" />;
+        return <Zap className="w-4 h-4 text-gray-500" />;
+    };
+
+    const getModelCategory = (modelValue: string) => {
+        if (modelValue.includes('openai')) return 'OpenAI';
+        if (modelValue.includes('anthropic')) return 'Anthropic';
+        if (modelValue.includes('google')) return 'Google';
+        if (modelValue.includes('meta')) return 'Meta';
+        return 'Other';
     };
     return (
         <>
@@ -150,59 +169,115 @@ export default function ModelSelection({ model, description }: { model?: string,
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         align="start"
-                        className="w-[calc(100vw-2rem)] sm:w-96 md:w-[30rem] lg:w-[36rem] bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-lg p-0 flex flex-col"
+                        className="w-[calc(100vw-2rem)] sm:w-96 md:w-[32rem] lg:w-[40rem] bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-xl rounded-lg p-0 flex flex-col max-h-[80vh]"
                     >
-                        {/* Sticky Search Input */}
-                        <div className="p-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 sticky top-0 z-10">
-                            <input
-                                ref={searchInputRef}
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search models..."
-                                className="w-full px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 border border-neutral-200 dark:border-neutral-700 focus:outline-none"
-                                autoFocus
-                                disabled={status === 'pending'}
-                                onBlur={(e) => {
-                                    // Prevent blur if clicking within the dropdown
-                                    const currentTarget = e.currentTarget;
-                                    setTimeout(() => {
-                                        if (document.activeElement !== currentTarget) {
-                                            currentTarget.focus();
-                                        }
-                                    }, 0);
-                                }}
-                            />
+                        {/* Enhanced Header with Search */}
+                        <div className="p-4 border-b border-neutral-200 dark:border-neutral-700 bg-gradient-to-r from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 sticky top-0 z-10">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Zap className="w-4 h-4 text-blue-500" />
+                                <h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
+                                    Select AI Model
+                                </h3>
+                            </div>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                                <Input
+                                    ref={searchInputRef}
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search models by name or description..."
+                                    className="pl-10 pr-4 py-2 bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    autoFocus
+                                    disabled={status === 'pending'}
+                                />
+                            </div>
                         </div>
-                        {/* Scrollable List */}
-                        <div className="max-h-64 overflow-y-auto">
+                        {/* Enhanced Models List */}
+                        <div className="max-h-80 overflow-y-auto">
                             {status === 'pending' ? (
-                                <div className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-sm">
-                                    Loading models...
+                                <div className="p-6 space-y-4">
+                                    {[1, 2, 3].map((i) => (
+                                        <div key={i} className="flex items-center gap-3 p-3">
+                                            <Skeleton className="w-4 h-4 rounded" />
+                                            <div className="flex-1 space-y-2">
+                                                <Skeleton className="w-3/4 h-4" />
+                                                <Skeleton className="w-1/2 h-3" />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             ) : filteredModels.length === 0 ? (
-                                <div className="px-4 py-3 text-neutral-500 dark:text-neutral-400 text-sm">
-                                    No models found.
+                                <div className="p-6 text-center">
+                                    <Search className="w-8 h-8 text-neutral-400 mx-auto mb-2" />
+                                    <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+                                        No models found matching &quot;{search}&quot;
+                                    </p>
                                 </div>
                             ) : (
-                                filteredModels.map((model) => (
-                                    <DropdownMenuItem
-                                        key={model.value}
-                                        disabled={!(state?.user?.balance > 0 || freeAccountModels.includes(model.value))}
-                                        onSelect={handleModelSelect(model.value)}
-                                        className={`flex flex-col items-start gap-1 px-4 py-3 cursor-pointer transition-colors
-                                ${selectedModel === model.value
-                                                ? "bg-neutral-100 dark:bg-neutral-800 font-semibold"
-                                                : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                                            }`}
-                                    >
-                                        <span className="text-neutral-900 dark:text-neutral-100 truncate w-full">{model.title} <Badge>{!(state.user?.balance > 0 || freeAccountModels.includes(model.value)) ? "paid" : "free"}</Badge></span>
-                                        <span className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 w-full">{model.description}</span>
-                                        <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 truncate w-full">
-                                            Input: {model.price.input} | Output: {model.price.output} | Thinking: {model.price.thinking} / 1M tokens
-                                        </div>
-                                    </DropdownMenuItem>
-                                ))
+                                <div className="p-2">
+                                    {filteredModels.map((model, index) => {
+                                        const isFree = state?.user?.balance > 0 || freeAccountModels.includes(model.value);
+                                        const isSelected = selectedModel === model.value;
+                                        const category = getModelCategory(model.value);
+
+                                        return (
+                                            <div key={model.value}>
+                                                {index > 0 && getModelCategory(filteredModels[index - 1].value) !== category && (
+                                                    <Separator className="my-2" />
+                                                )}
+                                                <DropdownMenuItem
+                                                    disabled={!isFree}
+                                                    onSelect={handleModelSelect(model.value)}
+                                                    className={`group flex items-start gap-3 p-4 cursor-pointer transition-all duration-200 rounded-lg mx-1
+                                                        ${isSelected
+                                                            ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                                                            : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                                                        } ${!isFree ? "opacity-50" : ""}`}
+                                                >
+                                                    <div className="flex-shrink-0 mt-0.5">
+                                                        {getModelIcon(model.value)}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-100 truncate">
+                                                                {model.title}
+                                                            </span>
+                                                            {isSelected && (
+                                                                <Check className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                                            )}
+                                                            <Badge
+                                                                variant={isFree ? "default" : "secondary"}
+                                                                className="text-xs"
+                                                            >
+                                                                {isFree ? "Free" : "Paid"}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 mb-2">
+                                                            {model.description}
+                                                        </p>
+                                                        <div className="flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-500">
+                                                            <div className="flex items-center gap-1">
+                                                                <DollarSign className="w-3 h-3" />
+                                                                <span>Input: {model.price.input}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <DollarSign className="w-3 h-3" />
+                                                                <span>Output: {model.price.output}</span>
+                                                            </div>
+                                                            {model.price.thinking !== "N/A" && (
+                                                                <div className="flex items-center gap-1">
+                                                                    <DollarSign className="w-3 h-3" />
+                                                                    <span>Thinking: {model.price.thinking}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </DropdownMenuItem>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             )}
                         </div>
                     </DropdownMenuContent>
