@@ -168,9 +168,17 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
     useEffect(() => {
         if (messages.length > allMessages.length && !isLoadingMore) {
             setAllMessages(messages);
-            // Trigger scroll when new messages arrive
+            // Enhanced scroll trigger for mobile devices when new messages arrive
             if (shouldScrollToBottom) {
-                setTimeout(() => scrollToBottom(), 100);
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    // Multiple scroll attempts for mobile
+                    setTimeout(() => scrollToBottom(), 50);
+                    setTimeout(() => scrollToBottom(), 200);
+                    setTimeout(() => scrollToBottom(), 400);
+                } else {
+                    setTimeout(() => scrollToBottom(), 100);
+                }
             }
         }
     }, [messages, allMessages.length, isLoadingMore, shouldScrollToBottom]);
@@ -182,13 +190,46 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
         setIsStreaming(status === 'streaming');
     }, [status]);
 
-    // Single comprehensive scroll management - prevents multiple scroll effects
+    // Enhanced scroll management for mobile devices
     useEffect(() => {
         if (shouldScrollToBottom && !isLoadingMore && containerRef.current) {
-            // Use immediate scroll without smooth behavior to prevent conflicts
-            containerRef.current.scrollTop = containerRef.current.scrollHeight;
+            const container = containerRef.current;
+            const isMobile = window.innerWidth <= 768;
+
+            if (isMobile) {
+                // Mobile-specific scroll handling with multiple attempts
+                const scrollToBottomMobile = () => {
+                    // Immediate scroll
+                    container.scrollTop = container.scrollHeight;
+
+                    // Smooth scroll attempt
+                    container.scrollTo({
+                        top: container.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                };
+
+                scrollToBottomMobile();
+
+                // Additional scroll attempts for streaming text
+                if (isStreaming) {
+                    const scrollInterval = setInterval(() => {
+                        if (shouldScrollToBottom && !isLoadingMore) {
+                            container.scrollTop = container.scrollHeight;
+                        } else {
+                            clearInterval(scrollInterval);
+                        }
+                    }, 100);
+
+                    // Clear interval after 3 seconds or when streaming stops
+                    setTimeout(() => clearInterval(scrollInterval), 3000);
+                }
+            } else {
+                // Desktop/tablet scroll
+                container.scrollTop = container.scrollHeight;
+            }
         }
-    }, [allMessages.length, shouldScrollToBottom, isLoadingMore]);
+    }, [allMessages.length, shouldScrollToBottom, isLoadingMore, isStreaming]);
 
     // Removed duplicate scroll effect - handled in comprehensive scroll management above
 
@@ -232,8 +273,16 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
         if (!trimmed) return;
 
         setShouldScrollToBottom(true);
-        // Immediately scroll to bottom when user submits
-        setTimeout(() => scrollToBottom(), 50);
+        // Enhanced scroll for mobile devices when user submits
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            // Multiple scroll attempts for mobile
+            setTimeout(() => scrollToBottom(), 50);
+            setTimeout(() => scrollToBottom(), 150);
+            setTimeout(() => scrollToBottom(), 300);
+        } else {
+            setTimeout(() => scrollToBottom(), 50);
+        }
 
         const parts: any[] = [
             ...(
@@ -275,8 +324,32 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
 
         const container = containerRef.current;
 
-        // Immediate scroll to bottom to prevent multiple scroll effects
-        container.scrollTop = container.scrollHeight;
+        // Mobile-specific scroll handling
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+            // For mobile devices, use multiple scroll methods for better compatibility
+            const scrollToBottomMobile = () => {
+                // Method 1: Direct scroll assignment
+                container.scrollTop = container.scrollHeight;
+
+                // Method 2: Smooth scroll with fallback
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+
+                // Method 3: Force scroll after a brief delay (for streaming text)
+                setTimeout(() => {
+                    container.scrollTop = container.scrollHeight;
+                }, 50);
+            };
+
+            scrollToBottomMobile();
+        } else {
+            // For desktop/tablet, use immediate scroll
+            container.scrollTop = container.scrollHeight;
+        }
     };
 
     const scrollToTop = () => {
@@ -355,7 +428,10 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                     className="flex-1 overflow-y-auto px-1 sm:px-2 py-1 bg-secondary"
                     style={{
                         height: "calc(100vh - 120px)",
-                        minHeight: "350px"
+                        minHeight: "350px",
+                        // Mobile-specific scroll behavior
+                        WebkitOverflowScrolling: "touch",
+                        scrollBehavior: "smooth"
                     }}
                     onScroll={(e) => {
                         // Check if user is near bottom with better threshold

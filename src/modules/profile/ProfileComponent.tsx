@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import EnableAIModels from "@/components/EnableAIModels";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { User, Mail, Calendar, Shield, CheckCircle, Edit3, Save, X } from "lucide-react";
@@ -83,7 +84,7 @@ export default function ProfileComponent() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Profile Information Card */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 space-y-6">
                         <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between">
@@ -211,6 +212,9 @@ export default function ProfileComponent() {
                                 )}
                             </CardContent>
                         </Card>
+
+                        {/* AI Models Configuration */}
+                        <EnableAIModels />
                     </div>
 
                     {/* Account Stats Card */}

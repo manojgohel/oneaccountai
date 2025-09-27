@@ -14,6 +14,7 @@ const UserSchema = new Schema(
     otp: { type: Number },
     otpExpireTime: { type: Date },
     status: { type: Boolean, default: false },
+    selectedModels: { type: [String], default: [] }, // Array of enabled AI model IDs
   },
   { timestamps: true }
 );
