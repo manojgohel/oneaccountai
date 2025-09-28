@@ -1,6 +1,5 @@
 "use server";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -74,7 +73,7 @@ export async function encrypt(payload: any): Promise<string> {
 }
 
 /**
- * Decrypts JWT token to extract payload
+ * Decrypts JWT token to extract payload with proper expiration validation
  * @param session - JWT token to decrypt
  * @returns Promise<SessionPayload | null> - Decrypted payload or null if invalid
  */
@@ -82,7 +81,15 @@ export async function decrypt(session: string): Promise<SessionPayload | null> {
     try {
         const { payload } = await jwtVerify(session, ENCODED_KEY, {
             algorithms: [JWT_ALGORITHM],
+            clockTolerance: '30s', // Allow 30 seconds clock tolerance
         });
+
+        // Additional expiration check
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+            console.log("Token has expired");
+            return null;
+        }
+
         return payload as any;
     } catch (error) {
         console.error("Failed to verify session:", error);
@@ -132,13 +139,13 @@ export async function createSessionOnly(updatedUser: User): Promise<any> {
 }
 
 /**
- * Creates a new session for the user and redirects to home page
+ * Creates a new session for the user and redirects to secure area
  * @param updatedUser - User object containing user data
- * @returns Promise<never> - Redirects to home page
+ * @returns Promise<never> - Redirects to secure area
  */
 export async function createSession(updatedUser: User): Promise<never> {
     await createSessionOnly(updatedUser);
-    redirect("/chat");
+    redirect("/secure");
 }
 
 /**
@@ -198,8 +205,8 @@ export async function deleteSession(): Promise<never> {
         console.error("❌ Failed to delete session:", error);
     }
 
-    // Redirect to login page
-    redirect("/login");
+    // Redirect to auth page
+    redirect("/(guest)/auth");
 }
 
 /**
@@ -289,5 +296,91 @@ export async function refreshSession(): Promise<void> {
     const currentSession = await verifySession();
     if (currentSession) {
         await updateSession({});
+    }
+}
+
+/**
+ * Validates JWT token for middleware usage (without cookies dependency)
+ * @param token - JWT token string
+ * @returns Promise<SessionPayload | null> - Valid session data or null
+ */
+export async function validateToken(token: string): Promise<SessionPayload | null> {
+    try {
+        if (!token) {
+            return null;
+        }
+
+        const { payload } = await jwtVerify(token, ENCODED_KEY, {
+            algorithms: [JWT_ALGORITHM],
+            clockTolerance: '30s',
+        });
+
+        // Check token expiration
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+            console.log("Token has expired in middleware");
+            return null;
+        }
+
+        // Validate required fields
+        if (!payload.userId) {
+            console.log("Invalid token: missing userId");
+            return null;
+        }
+
+        return payload as unknown as SessionPayload;
+    } catch (error) {
+        console.error("Token validation failed:", error);
+        return null;
+    }
+}
+
+/**
+ * Checks if token is expired without full verification
+ * @param token - JWT token string
+ * @returns Promise<boolean> - True if expired, false otherwise
+ */
+export async function isTokenExpired(token: string): Promise<boolean> {
+    try {
+        const { payload } = await jwtVerify(token, ENCODED_KEY, {
+            algorithms: [JWT_ALGORITHM],
+        });
+
+        return payload.exp ? payload.exp * 1000 < Date.now() : true;
+    } catch {
+        return true; // Consider invalid tokens as expired
+    }
+}
+
+/**
+ * Gets token expiration time in milliseconds
+ * @param token - JWT token string
+ * @returns Promise<number | null> - Expiration time in ms or null if invalid
+ */
+export async function getTokenExpiration(token: string): Promise<number | null> {
+    try {
+        const { payload } = await jwtVerify(token, ENCODED_KEY, {
+            algorithms: [JWT_ALGORITHM],
+        });
+
+        return payload.exp ? payload.exp * 1000 : null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Checks if token needs refresh (expires within 1 hour)
+ * @param token - JWT token string
+ * @returns Promise<boolean> - True if needs refresh, false otherwise
+ */
+export async function needsTokenRefresh(token: string): Promise<boolean> {
+    try {
+        const expiration = await getTokenExpiration(token);
+        if (!expiration) return true;
+
+        const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+        return expiration - Date.now() < oneHour;
+    } catch {
+        return true;
     }
 }

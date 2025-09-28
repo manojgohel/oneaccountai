@@ -7,6 +7,7 @@ import dbConnect from "@/lib/mongoose";
 import { createSessionOnly } from "@/lib/session";
 import User from "@/models/User";
 import generateOtpEmail from "@/utils/generateOtpEmail";
+import { redirect } from "next/navigation";
 
 // Type definitions
 interface CreateOrUpdateUserParams {

@@ -22,6 +22,9 @@ import {
 } from "lucide-react";
 import getAiModels from "@/actions/ai/models";
 import { useQuery } from "@tanstack/react-query";
+import { useGlobalContext } from "@/providers/context-provider";
+import { useRouter } from "next/navigation";
+import WalletTopupDialog from "./WalletTopupDialog";
 
 
 export default function EnableAIModels() {
@@ -30,6 +33,11 @@ export default function EnableAIModels() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const [showWalletDialog, setShowWalletDialog] = useState(false);
+    const [pendingModel, setPendingModel] = useState<{ modelId: string; name: string; requiredBalance: number } | null>(null);
+
+    const { state } = useGlobalContext();
+    const router = useRouter();
 
 
     const { data: availableModels, isLoading: modelsLoading, error: modelsError } = useQuery({
@@ -63,6 +71,40 @@ export default function EnableAIModels() {
     // Handle model toggle
     const handleModelToggle = (modelId: string) => {
         if (!modelId) return;
+
+        // Find the model data
+        const model = availableModels?.find((m: any) => m.modelId === modelId);
+        if (!model) return;
+
+        // Check if model is free
+        if (isModelFree(model.pricing)) {
+            // Free model - allow toggle without balance check
+            setSelectedModels(prev => {
+                if (prev.includes(modelId)) {
+                    return prev.filter(id => id !== modelId);
+                } else {
+                    return [...prev, modelId];
+                }
+            });
+            return;
+        }
+
+        // Premium model - check balance
+        const requiredBalance = calculateRequiredBalance(model.pricing);
+        const currentBalance = (state?.user as any)?.balance || 0;
+
+        if (currentBalance < requiredBalance) {
+            // Insufficient balance - show wallet dialog
+            setPendingModel({
+                modelId,
+                name: model.name || 'Unknown Model',
+                requiredBalance
+            });
+            setShowWalletDialog(true);
+            return;
+        }
+
+        // Sufficient balance - allow toggle
         setSelectedModels(prev => {
             if (prev.includes(modelId)) {
                 return prev.filter(id => id !== modelId);
@@ -115,9 +157,25 @@ export default function EnableAIModels() {
 
     // Helper function to format pricing
     const formatPricing = (price: number) => {
-        if (price >= 1e-3) return `$${(price * 1000).toFixed(1)}/1K`;
-        if (price >= 1e-6) return `$${(price * 1000000).toFixed(2)}/1M`;
-        return `$${price.toExponential(2)}`;
+        if (price === 0) return 'Free';
+        if (price >= 1e-3) return `$${(price * 1000).toFixed(1)}/1K tokens`;
+        if (price >= 1e-6) return `$${(price * 1000000).toFixed(2)}/1M tokens`;
+        if (price >= 1e-9) return `$${(price * 1000000).toFixed(3)}/1M tokens`;
+        return `$${(price * 1000000).toFixed(4)}/1M tokens`;
+    };
+
+    // Helper function to calculate required balance for 1M tokens
+    const calculateRequiredBalance = (pricing: any) => {
+        if (!pricing?.input && !pricing?.output) return 0;
+        const inputPrice = pricing.input || 0;
+        const outputPrice = pricing.output || 0;
+        // Use the higher of input or output price for 1M tokens
+        return Math.max(inputPrice * 1000000, outputPrice * 1000000);
+    };
+
+    // Helper function to check if model is free
+    const isModelFree = (pricing: any) => {
+        return !pricing?.input && !pricing?.output;
     };
 
     // Filter models based on search query
@@ -152,6 +210,18 @@ export default function EnableAIModels() {
     // Clear search
     const clearSearch = () => {
         setSearchQuery("");
+    };
+
+    // Handle wallet top-up
+    const handleWalletTopup = () => {
+        setShowWalletDialog(false);
+        router.push('/secure/wallet');
+    };
+
+    // Close wallet dialog
+    const handleCloseWalletDialog = () => {
+        setShowWalletDialog(false);
+        setPendingModel(null);
     };
 
     if (loading || modelsLoading) {
@@ -189,6 +259,7 @@ export default function EnableAIModels() {
     }
 
     return (
+        <>
         <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
             <CardHeader>
                 <div className="flex items-center justify-between">
@@ -298,9 +369,12 @@ export default function EnableAIModels() {
                                                 <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-500">
                                                     <span className="font-medium">{provider}</span>
                                                     <span>•</span>
-                                                    <span>Input: {formatPricing(model.pricing?.input || 0)}</span>
-                                                    <span>•</span>
-                                                    <span>Output: {formatPricing(model.pricing?.output || 0)}</span>
+                                                    <span className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                                                        Input: {formatPricing(model.pricing?.input || 0)}
+                                                    </span>
+                                                    <span className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                                                        Output: {formatPricing(model.pricing?.output || 0)}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -353,6 +427,19 @@ export default function EnableAIModels() {
                 </div>
             </CardContent>
         </Card>
+
+        {/* Wallet Top-up Dialog */}
+        {pendingModel && (
+            <WalletTopupDialog
+                isOpen={showWalletDialog}
+                onClose={handleCloseWalletDialog}
+                modelName={pendingModel.name}
+                requiredBalance={pendingModel.requiredBalance}
+                currentBalance={(state?.user as any)?.balance || 0}
+                onTopup={handleWalletTopup}
+            />
+        )}
+        </>
     );
 }
 

@@ -14,7 +14,7 @@ const UserSchema = new Schema(
     otp: { type: Number },
     otpExpireTime: { type: Date },
     status: { type: Boolean, default: false },
-    selectedModels: { type: [String], default: [] }, // Array of enabled AI model IDs
+    selectedModels: { type: [String], default: ["meituan/longcat-flash-chat","openai/gpt-4.1-nano"] }, // Array of enabled AI model IDs
   },
   { timestamps: true }
 );

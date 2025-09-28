@@ -77,7 +77,7 @@ export default async function sendEmail(
                 'X-API-KEY': MAILBABY_API_KEY,
             },
             maxBodyLength: Infinity,
-            timeout: 15000,
+            // timeout: 15000,
         });
 
         const messageId =
@@ -92,6 +92,7 @@ export default async function sendEmail(
             messageId,
         };
     } catch (error: any) {
+        console.log("🚀💡💡💡💡💡=====> ~ sendEmail ~ error:", error)
         let errorMessage = 'Unknown error occurred';
         if (error?.response) {
             errorMessage = `${error.response.status}: ${JSON.stringify(error.response.data)}`;

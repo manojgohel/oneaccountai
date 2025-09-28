@@ -4,7 +4,13 @@ import React, { createContext, useContext, useState, type ReactNode } from "reac
 
 type GlobalState = {
     // Add your global state properties here
-    user?: { name: string; email: string; model: string } | null;
+    user?: {
+        name: string;
+        email: string;
+        model: string;
+        balance: number;
+        _id: string;
+    } | null;
     theme?: "light" | "dark";
     model?: string | null;
     conversation?: any; // Define a proper type based on your conversation structure
