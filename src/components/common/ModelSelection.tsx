@@ -110,15 +110,12 @@ export default function ModelSelection({ model, description }: { model?: string,
                     >
                         <div className="flex flex-col items-start min-w-0">
                             <div className="flex items-center gap-2 w-full">
-                                <div className="flex-shrink-0">
-                                    {selected && getModelIcon(selected.value)}
-                                </div>
                                 <div className="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">
                                     {status === 'pending' ? 'Loading...' : selected?.title || 'Select Model'}
                                 </div>
                             </div>
                             {(description || (selected && getModelDescription(selected.value))) && (
-                                <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5 ml-7">
+                                <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
                                     {description || (selected && getModelDescription(selected.value))}
                                 </div>
                             )}

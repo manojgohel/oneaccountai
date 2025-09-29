@@ -260,19 +260,19 @@ export default function EnableAIModels() {
 
     return (
         <>
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle className="text-xl flex items-center gap-2">
-                            <Settings className="h-5 w-5 text-blue-600" />
-                            AI Model Preferences
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm mx-1 sm:mx-2 xl:mx-0 min-w-0">
+            <CardHeader className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="min-w-0">
+                        <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                            <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+                            <span className="truncate">AI Model Preferences</span>
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-xs sm:text-sm">
                             Configure which AI models are available for your conversations
                         </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                         <Badge variant="outline" className="text-xs">
                             {selectedModels.length} enabled
                         </Badge>
@@ -292,33 +292,33 @@ export default function EnableAIModels() {
                 )}
 
                 {/* Search Input */}
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-slate-400" />
                         <Input
                             type="text"
-                            placeholder="Search models by name, provider, or description..."
+                            placeholder="Search models..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-10"
+                            className="pl-8 sm:pl-10 pr-8 sm:pr-10 text-sm h-9 sm:h-10"
                         />
                         {searchQuery && (
                             <button
                                 onClick={clearSearch}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 hover:text-slate-600"
+                                className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-slate-400 hover:text-slate-600"
                             >
-                                <X className="h-4 w-4" />
+                                <X className="h-3 w-3 sm:h-4 sm:w-4" />
                             </button>
                         )}
                     </div>
                     {searchQuery && (
-                        <p className="text-xs text-slate-500 mt-2">
+                        <p className="text-xs text-slate-500 mt-1 sm:mt-2">
                             {filteredModels.length} model{filteredModels.length !== 1 ? 's' : ''} found
                         </p>
                     )}
                 </div>
-                <ScrollArea className="h-[400px] w-full">
-                    <div className="space-y-4 pr-4">
+                <ScrollArea className="h-[400px] w-full min-w-0">
+                    <div className="space-y-3 sm:space-y-4 pr-1 xl:pr-4">
                         {!availableModels || availableModels.length === 0 ? (
                             <div className="text-center py-8">
                                 <Settings className="h-8 w-8 text-slate-400 mx-auto mb-2" />
@@ -346,33 +346,83 @@ export default function EnableAIModels() {
                             return (
                                 <div key={model.modelId}>
                                     {index > 0 && <Separator className="my-4" />}
-                                    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                        <div className="flex items-center gap-4 flex-1">
+                                    <div className="border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors min-w-0">
+                                        {/* Mobile-first layout - covers all devices up to large screens */}
+                                        <div className="block xl:hidden p-3 sm:p-4">
+                                            {/* Toggle positioned at the very top - always visible */}
+                                            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">
+                                                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 truncate pr-2">
+                                                    Enable this model
+                                                </span>
+                                                <Switch
+                                                    checked={isEnabled}
+                                                    onCheckedChange={() => handleModelToggle(model.modelId)}
+                                                    className="data-[state=checked]:bg-blue-600 flex-shrink-0"
+                                                />
+                                            </div>
+
+                                            <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                                                <div className="flex-shrink-0">
+                                                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                                                        <Settings className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2 flex-wrap">
+                                                        <h3 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate min-w-0">
+                                                            {model.name || 'Unknown Model'}
+                                                        </h3>
+                                                        <div className="flex items-center gap-1">
+                                                            {getCategoryBadge(category)}
+                                                            {isEnabled && (
+                                                                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 sm:mb-3 line-clamp-2">
+                                                {model.description || 'No description available'}
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs text-slate-500 dark:text-slate-500">
+                                                <span className="font-medium text-xs">{provider}</span>
+                                                <span className="bg-slate-100 dark:bg-slate-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs whitespace-nowrap">
+                                                    Input: {formatPricing(model.pricing?.input || 0)}
+                                                </span>
+                                                <span className="bg-slate-100 dark:bg-slate-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs whitespace-nowrap">
+                                                    Output: {formatPricing(model.pricing?.output || 0)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Desktop layout - only for very large screens */}
+                                        <div className="hidden xl:flex items-start justify-between p-4">
+                                            <div className="flex items-start gap-3 flex-1 min-w-0">
                                             <div className="flex-shrink-0">
                                                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
                                                     <Settings className="w-4 h-4 text-blue-600" />
                                                 </div>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                        <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
                                                         {model.name || 'Unknown Model'}
                                                     </h3>
                                                     {getCategoryBadge(category)}
                                                     {isEnabled && (
-                                                        <CheckCircle className="w-4 h-4 text-green-500" />
+                                                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+                                                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">
                                                     {model.description || 'No description available'}
                                                 </p>
-                                                <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-500">
+                                                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-500">
                                                     <span className="font-medium">{provider}</span>
-                                                    <span>•</span>
-                                                    <span className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                                                        <span className="hidden lg:inline">•</span>
+                                                        <span className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs whitespace-nowrap">
                                                         Input: {formatPricing(model.pricing?.input || 0)}
                                                     </span>
-                                                    <span className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                                                        <span className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs whitespace-nowrap">
                                                         Output: {formatPricing(model.pricing?.output || 0)}
                                                     </span>
                                                 </div>
@@ -384,6 +434,7 @@ export default function EnableAIModels() {
                                                 onCheckedChange={() => handleModelToggle(model.modelId)}
                                                 className="data-[state=checked]:bg-blue-600"
                                             />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -393,8 +444,8 @@ export default function EnableAIModels() {
                     </div>
                 </ScrollArea>
 
-                <div className="mt-6 pt-4 border-t">
-                    <div className="flex items-center justify-between">
+                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
+                    <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 sm:gap-4">
                         <div className="text-sm text-slate-600 dark:text-slate-400">
                             {selectedModels.length === 0 ? (
                                 <span className="text-amber-600 dark:text-amber-400">
@@ -409,7 +460,7 @@ export default function EnableAIModels() {
                         <Button
                             onClick={handleSave}
                             disabled={saving || selectedModels.length === 0}
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 w-full xl:w-auto text-sm"
                         >
                             {saving ? (
                                 <>
