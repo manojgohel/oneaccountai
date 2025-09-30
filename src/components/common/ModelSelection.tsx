@@ -105,7 +105,7 @@ export default function ModelSelection({ model, description }: { model?: string,
                 <DropdownMenuTrigger asChild>
                     <button
                         type="button"
-                        className="text-left cursor-pointer bg-transparent border-0 p-0 w-full min-w-0 relative"
+                        className="text-left cursor-pointer border-0 p-0 w-full min-w-0 relative"
                         disabled={status === 'pending'}
                     >
                         <div className="flex flex-col items-start min-w-0">

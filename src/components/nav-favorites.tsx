@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import {
@@ -27,10 +26,11 @@ import {
 } from "@/components/ui/sidebar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export function NavFavorites() {
   const { isMobile } = useSidebar();
+  const pathname = usePathname();
 
   const { status, data: conversations } = useQuery({ queryKey: ['conversations'], queryFn: () => getConversations() });
 
@@ -78,6 +78,11 @@ export function NavFavorites() {
     }
   };
 
+  // Function to check if a conversation is currently active
+  const isConversationActive = (conversationId: string) => {
+    return pathname === `/secure/${conversationId}`;
+  };
+
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Chats</SidebarGroupLabel>
@@ -86,7 +91,7 @@ export function NavFavorites() {
           <>
             {conversations?.conversations && conversations?.conversations.map((item: any) => (
               <SidebarMenuItem key={item._id}>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={isConversationActive(item._id)}>
                   {renamingId === item._id ? (
                     <input
                       className="px-2 py-1 rounded border w-full"
@@ -99,7 +104,7 @@ export function NavFavorites() {
                     />
                   ) : (
                     <Link href={`/secure/${item._id}`} title={item.name}>
-                      <span>{item.name}</span>
+                      <span className="sidebar-text">{item.name}</span>
                     </Link>
                   )}
                 </SidebarMenuButton>
@@ -121,7 +126,7 @@ export function NavFavorites() {
                       disabled={renameStatus === "pending"}
                     >
                       <Edit2 className=" text-muted-foreground" />
-                      <span>Rename</span>
+                      <span className="sidebar-text">Rename</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -130,7 +135,7 @@ export function NavFavorites() {
                       className="cursor-pointer text-orange-700"
                     >
                       <Trash2 className=" text-orange-700" />
-                      <span className="text-orange-700">Delete</span>
+                      <span className="text-orange-700 sidebar-text">Delete</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

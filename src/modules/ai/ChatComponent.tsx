@@ -366,19 +366,16 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
             {isMessagesLoading && !hasMessages && (
                 <div className="flex flex-1 items-center justify-center w-full min-h-[40vh]">
                     <div className="flex flex-col items-center space-y-4">
-                        <div className="relative">
-                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 dark:border-blue-800"></div>
-                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-transparent border-t-blue-500 absolute top-0 left-0"></div>
-                        </div>
                         <div className="text-center space-y-1">
-                            <p className="text-slate-600 dark:text-slate-400 font-medium">
-                                {isNewConversation ? 'Initializing chat...' : 'Loading messages...'}
-                            </p>
                             <div className="flex space-x-1">
                                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
                                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                             </div>
+                            <p className="text-slate-600 dark:text-slate-400 font-medium">
+                                {isNewConversation ? 'Initializing chat...' : 'Loading messages...'}
+                            </p>
+
                         </div>
                     </div>
                 </div>
@@ -440,7 +437,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                         setShouldScrollToBottom(isNearBottom);
                     }}
                 >
-                <div className="max-w-6xl mx-auto px-1 min-h-[75vh] pb-8" style={{ scrollBehavior: 'smooth' }}>
+                <div className="max-w-4xl mx-auto px-1 min-h-[75vh] pb-8" style={{ scrollBehavior: 'smooth' }}>
                     {/* Load More Button */}
                     {hasMoreMessages && allMessages.length > 0 && (
                         <div className="flex justify-center py-3">
@@ -633,7 +630,7 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
             {/* Input area */}
             {allMessages.length !== 0 && (
                 <div className="sticky bottom-0 z-20">
-                    <div className="max-w-6xl mx-auto px-1 py-2">
+                    <div className="max-w-4xl mx-auto px-1 py-2">
                         <PromptInputComponent
                             handleSubmit={handleSubmit}
                             setInput={setInput}

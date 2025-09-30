@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "./ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -345,97 +344,63 @@ export default function EnableAIModels() {
 
                             return (
                                 <div key={model.modelId}>
-                                    {index > 0 && <Separator className="my-4" />}
+                                    {index > 0 && <Separator className="my-2" />}
                                     <div className="border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors min-w-0">
-                                        {/* Mobile-first layout - covers all devices up to large screens */}
-                                        <div className="block xl:hidden p-3 sm:p-4">
+                                        {/* Responsive layout - visible on all screen sizes */}
+                                        <div className="block p-2">
                                             {/* Toggle positioned at the very top - always visible */}
-                                            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">
-                                                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 truncate pr-2">
+                                            <div
+                                                className="flex items-center justify-between mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded p-1 -m-1 transition-colors"
+                                                onClick={() => handleModelToggle(model.modelId)}
+                                            >
+                                                <div className={`flex-shrink-0 w-4 h-4 border-2 rounded flex items-center justify-center transition-colors ${isEnabled
+                                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                                        : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
+                                                    }`}>
+                                                    {isEnabled && (
+                                                        <CheckCircle className="w-3 h-3 text-blue-600" />
+                                                    )}
+                                                </div>
+                                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate pr-1">
                                                     Enable this model
                                                 </span>
-                                                <Switch
-                                                    checked={isEnabled}
-                                                    onCheckedChange={() => handleModelToggle(model.modelId)}
-                                                    className="data-[state=checked]:bg-blue-600 flex-shrink-0"
-                                                />
+
                                             </div>
 
-                                            <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                                            <div className="flex items-start gap-1 mb-1">
                                                 <div className="flex-shrink-0">
-                                                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                                                        <Settings className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                                                    <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/20 rounded flex items-center justify-center">
+                                                        <Settings className="w-2 h-2 text-blue-600" />
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2 flex-wrap">
-                                                        <h3 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate min-w-0">
+                                                    <div className="flex items-center gap-1 mb-1 flex-wrap">
+                                                        <h3 className="font-semibold text-xs text-slate-900 dark:text-slate-100 truncate min-w-0">
                                                             {model.name || 'Unknown Model'}
                                                         </h3>
                                                         <div className="flex items-center gap-1">
                                                             {getCategoryBadge(category)}
                                                             {isEnabled && (
-                                                                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+                                                                <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
                                                             )}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 sm:mb-3 line-clamp-2">
+                                            <p className="text-xs text-slate-600 dark:text-slate-400 mb-1 line-clamp-1">
                                                 {model.description || 'No description available'}
                                             </p>
-                                            <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs text-slate-500 dark:text-slate-500">
+                                            <div className="flex flex-wrap items-center gap-1 text-xs text-slate-500 dark:text-slate-500">
                                                 <span className="font-medium text-xs">{provider}</span>
-                                                <span className="bg-slate-100 dark:bg-slate-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs whitespace-nowrap">
+                                                <span className="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs whitespace-nowrap">
                                                     Input: {formatPricing(model.pricing?.input || 0)}
                                                 </span>
-                                                <span className="bg-slate-100 dark:bg-slate-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs whitespace-nowrap">
+                                                <span className="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs whitespace-nowrap">
                                                     Output: {formatPricing(model.pricing?.output || 0)}
                                                 </span>
                                             </div>
                                         </div>
 
-                                        {/* Desktop layout - only for very large screens */}
-                                        <div className="hidden xl:flex items-start justify-between p-4">
-                                            <div className="flex items-start gap-3 flex-1 min-w-0">
-                                            <div className="flex-shrink-0">
-                                                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                                                    <Settings className="w-4 h-4 text-blue-600" />
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                        <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
-                                                        {model.name || 'Unknown Model'}
-                                                    </h3>
-                                                    {getCategoryBadge(category)}
-                                                    {isEnabled && (
-                                                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                                                    )}
-                                                </div>
-                                                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-2 line-clamp-2">
-                                                    {model.description || 'No description available'}
-                                                </p>
-                                                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-500">
-                                                    <span className="font-medium">{provider}</span>
-                                                        <span className="hidden lg:inline">•</span>
-                                                        <span className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs whitespace-nowrap">
-                                                        Input: {formatPricing(model.pricing?.input || 0)}
-                                                    </span>
-                                                        <span className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs whitespace-nowrap">
-                                                        Output: {formatPricing(model.pricing?.output || 0)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex-shrink-0 ml-4">
-                                            <Switch
-                                                checked={isEnabled}
-                                                onCheckedChange={() => handleModelToggle(model.modelId)}
-                                                className="data-[state=checked]:bg-blue-600"
-                                            />
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             );

@@ -8,17 +8,18 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { DollarSign, Search, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import SearchModal from "./SearchModal";
 
 export function NavMain() {
+  const pathname = usePathname();
+
   const items: any = [
     {
       title: "New Chat",
       url: "/secure/new",
       icon: Sparkles,
-      isActive: true,
     },
     {
       title: "Search",
@@ -48,6 +49,14 @@ export function NavMain() {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Function to check if a navigation item is currently active
+  const isNavItemActive = (url: string) => {
+    if (url === "/secure/new") {
+      return pathname === "/secure/new" || pathname === "/secure";
+    }
+    return pathname === url;
+  };
+
   return (
     <>
     <SearchModal
@@ -57,8 +66,8 @@ export function NavMain() {
     <SidebarMenu>
       {items.map((item: any) => (
         <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton asChild isActive={item.isActive}>
-            <span className="text-start cursor-pointer" onClick={() => handleOnClick(item.url)}>
+          <SidebarMenuButton asChild isActive={isNavItemActive(item.url)}>
+            <span className="text-start cursor-pointer sidebar-text" onClick={() => handleOnClick(item.url)}>
               <item.icon />
               <span className="text-start">{item.title}</span>
             </span>

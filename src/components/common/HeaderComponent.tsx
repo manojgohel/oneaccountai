@@ -45,7 +45,7 @@ export default function HeaderComponent({ title, description, model }: HeaderCom
 
     return (
         <>
-            <header className="sticky top-0 flex shrink-0 items-center gap-2 px-3 py-2 z-10 bg-background/95 backdrop-blur-xl border-b border-border/50 shadow-sm">
+            <header className="sticky top-0 flex shrink-0 items-center gap-2 px-3 py-2 z-10 bg-secondary">
                 <div className="flex flex-1 items-center gap-3 px-1 min-w-0 overflow-hidden">
                     <SidebarTrigger className="cursor-pointer flex-shrink-0 hover:bg-accent/80 transition-colors duration-200 rounded-lg p-1" />
                     <Separator
