@@ -8,7 +8,7 @@ export default function SecureLayout({ children }: { children: React.ReactNode }
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex h-dvh flex-col">
+      <SidebarInset className="flex h-dvh flex-col bg-secondary">
         {children}
       </SidebarInset>
     </SidebarProvider>

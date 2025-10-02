@@ -23,7 +23,7 @@ interface AnalyticsChartsProps {
 
 export default function AnalyticsCharts({ chartData, pieData }: AnalyticsChartsProps) {
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-secondary">
             {/* Daily Usage Bar Chart */}
             <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
                 <CardHeader>

@@ -78,7 +78,7 @@ export default function WalletComponent() {
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-secondary">
             {/* Balance Card */}
             <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-teal-900/20 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="pb-4">

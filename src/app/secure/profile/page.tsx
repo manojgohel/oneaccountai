@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 
 export default async function SecurePage() {
     return (
-        <>
+        <div>
             <HeaderComponent title="Profile" description="Manage your profile information and settings." />
             <ProfileComponent />
-        </>
+        </div>
     );
 }

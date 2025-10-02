@@ -196,11 +196,11 @@ export default function EnableAIModels() {
     const getCategoryBadge = (category: string) => {
         switch (category) {
             case 'premium':
-                return <Badge variant="destructive" className="text-xs">Premium</Badge>;
+                return <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">Premium</Badge>;
             case 'standard':
-                return <Badge variant="secondary" className="text-xs">Standard</Badge>;
+                return <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">Standard</Badge>;
             case 'free':
-                return <Badge variant="outline" className="text-xs text-green-600 border-green-600">Free</Badge>;
+                return <Badge variant="outline" className="text-xs text-gray-600 border-gray-600">Free</Badge>;
             default:
                 return null;
         }
@@ -225,10 +225,10 @@ export default function EnableAIModels() {
 
     if (loading || modelsLoading) {
         return (
-            <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+            <Card className="shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                 <CardHeader>
                     <CardTitle className="text-xl flex items-center gap-2">
-                        <Settings className="h-5 w-5 text-blue-600" />
+                        <Settings className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                         AI Model Preferences
                     </CardTitle>
                     <CardDescription>
@@ -259,12 +259,12 @@ export default function EnableAIModels() {
 
     return (
         <>
-        <Card className="shadow-lg border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm mx-1 sm:mx-2 xl:mx-0 min-w-0">
+        <Card className="shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 mx-1 sm:mx-2 xl:mx-0 min-w-0">
             <CardHeader className="p-3 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="min-w-0">
                         <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                            <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+                            <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
                             <span className="truncate">AI Model Preferences</span>
                         </CardTitle>
                         <CardDescription className="text-xs sm:text-sm">
@@ -293,7 +293,7 @@ export default function EnableAIModels() {
                 {/* Search Input */}
                 <div className="mb-3 sm:mb-4">
                     <div className="relative">
-                        <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-slate-400" />
+                        <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                         <Input
                             type="text"
                             placeholder="Search models..."
@@ -304,14 +304,14 @@ export default function EnableAIModels() {
                         {searchQuery && (
                             <button
                                 onClick={clearSearch}
-                                className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-slate-400 hover:text-slate-600"
+                                className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 hover:text-gray-600"
                             >
                                 <X className="h-3 w-3 sm:h-4 sm:w-4" />
                             </button>
                         )}
                     </div>
                     {searchQuery && (
-                        <p className="text-xs text-slate-500 mt-1 sm:mt-2">
+                        <p className="text-xs text-gray-500 mt-1 sm:mt-2">
                             {filteredModels.length} model{filteredModels.length !== 1 ? 's' : ''} found
                         </p>
                     )}
@@ -320,17 +320,17 @@ export default function EnableAIModels() {
                     <div className="space-y-3 sm:space-y-4 pr-1 xl:pr-4">
                         {!availableModels || availableModels.length === 0 ? (
                             <div className="text-center py-8">
-                                <Settings className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                                <p className="text-sm text-slate-500">No AI models available</p>
-                                <p className="text-xs text-slate-400 mt-1">Please check your connection and try again</p>
+                                <Settings className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                                <p className="text-sm text-gray-500">No AI models available</p>
+                                <p className="text-xs text-gray-400 mt-1">Please check your connection and try again</p>
                             </div>
                         ) : filteredModels.length === 0 && searchQuery ? (
                             <div className="text-center py-8">
-                                <Search className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                                <p className="text-sm text-slate-500">No models found matching &quot;{searchQuery}&quot;</p>
+                                <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                                <p className="text-sm text-gray-500">No models found matching &quot;{searchQuery}&quot;</p>
                                 <button
                                     onClick={clearSearch}
-                                    className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                                    className="text-xs text-gray-600 hover:text-gray-800 mt-1"
                                 >
                                     Clear search
                                 </button>
@@ -345,23 +345,23 @@ export default function EnableAIModels() {
                             return (
                                 <div key={model.modelId}>
                                     {index > 0 && <Separator className="my-2" />}
-                                    <div className="border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors min-w-0">
+                                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors min-w-0">
                                         {/* Responsive layout - visible on all screen sizes */}
                                         <div className="block p-2">
                                             {/* Toggle positioned at the very top - always visible */}
                                             <div
-                                                className="flex items-center justify-between mb-2 pb-1 border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded p-1 -m-1 transition-colors"
+                                                className="flex items-center justify-between mb-2 pb-1 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded p-1 -m-1 transition-colors"
                                                 onClick={() => handleModelToggle(model.modelId)}
                                             >
                                                 <div className={`flex-shrink-0 w-4 h-4 border-2 rounded flex items-center justify-center transition-colors ${isEnabled
-                                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                                        : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
+                                                        ? 'border-gray-500 bg-gray-50 dark:bg-gray-700'
+                                                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
                                                     }`}>
                                                     {isEnabled && (
-                                                        <CheckCircle className="w-3 h-3 text-blue-600" />
+                                                        <CheckCircle className="w-3 h-3 text-gray-600" />
                                                     )}
                                                 </div>
-                                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate pr-1">
+                                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate pr-1">
                                                     Enable this model
                                                 </span>
 
@@ -369,13 +369,13 @@ export default function EnableAIModels() {
 
                                             <div className="flex items-start gap-1 mb-1">
                                                 <div className="flex-shrink-0">
-                                                    <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/20 rounded flex items-center justify-center">
-                                                        <Settings className="w-2 h-2 text-blue-600" />
+                                                    <div className="w-4 h-4 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
+                                                        <Settings className="w-2 h-2 text-gray-600" />
                                                     </div>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1 mb-1 flex-wrap">
-                                                        <h3 className="font-semibold text-xs text-slate-900 dark:text-slate-100 truncate min-w-0">
+                                                        <h3 className="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate min-w-0">
                                                             {model.name || 'Unknown Model'}
                                                         </h3>
                                                         <div className="flex items-center gap-1">
@@ -387,15 +387,15 @@ export default function EnableAIModels() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-slate-600 dark:text-slate-400 mb-1 line-clamp-1">
+                                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 line-clamp-1">
                                                 {model.description || 'No description available'}
                                             </p>
-                                            <div className="flex flex-wrap items-center gap-1 text-xs text-slate-500 dark:text-slate-500">
+                                            <div className="flex flex-wrap items-center gap-1 text-xs text-gray-500 dark:text-gray-500">
                                                 <span className="font-medium text-xs">{provider}</span>
-                                                <span className="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs whitespace-nowrap">
+                                                <span className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs whitespace-nowrap">
                                                     Input: {formatPricing(model.pricing?.input || 0)}
                                                 </span>
-                                                <span className="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-xs whitespace-nowrap">
+                                                <span className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs whitespace-nowrap">
                                                     Output: {formatPricing(model.pricing?.output || 0)}
                                                 </span>
                                             </div>
@@ -411,9 +411,9 @@ export default function EnableAIModels() {
 
                 <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
                     <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3 sm:gap-4">
-                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                             {selectedModels.length === 0 ? (
-                                <span className="text-amber-600 dark:text-amber-400">
+                                <span className="text-gray-600 dark:text-gray-400">
                                     No models selected. Please enable at least one model.
                                 </span>
                             ) : (

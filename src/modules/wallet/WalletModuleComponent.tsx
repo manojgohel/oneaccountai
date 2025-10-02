@@ -24,7 +24,7 @@ export default async function WalletModuleComponent() {
     }));
 
     return (
-        <div className="min-h-screen ">
+        <div className="min-h-screen">
             <HeaderComponent title="Wallet Dashboard" description="Monitor your token usage and optimize your AI model performance." />
             <div className="max-w-7xl mx-auto p-4">
 
