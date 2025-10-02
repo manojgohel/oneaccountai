@@ -18,6 +18,10 @@ import {
     SourcesContent,
     SourcesTrigger,
 } from '@/components/sources';
+import { Error } from '@/components/error';
+import { Data } from '@/components/data';
+import { ToolInput, ToolOutput } from '@/components/tool';
+import { MessageMetadata } from '@/components/message-metadata';
 import { Button } from '@/components/ui/button';
 import { FILE_URL } from '@/consts/ai.consts';
 import { useGreeting } from '@/hooks/use-get-greeting';
@@ -437,193 +441,249 @@ const ChatComponent = ({ conversationId, conversations }: ChatComponentProps) =>
                         setShouldScrollToBottom(isNearBottom);
                     }}
                 >
-                <div className="max-w-4xl mx-auto px-1 min-h-[75vh] pb-8" style={{ scrollBehavior: 'smooth' }}>
-                    {/* Load More Button */}
-                    {hasMoreMessages && allMessages.length > 0 && (
-                        <div className="flex justify-center py-3">
-                            <Button
-                                onClick={handleLoadMore}
-                                disabled={isLoadingMore}
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-sm border-slate-200 dark:border-slate-700"
-                            >
-                                {isLoadingMore ? (
+                    <div className="max-w-4xl mx-auto px-1 min-h-[75vh] pb-8" style={{ scrollBehavior: 'smooth' }}>
+                        {/* Load More Button */}
+                        {hasMoreMessages && allMessages.length > 0 && (
+                            <div className="flex justify-center py-3">
+                                <Button
+                                    onClick={handleLoadMore}
+                                    disabled={isLoadingMore}
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-sm border-slate-200 dark:border-slate-700"
+                                >
+                                    {isLoadingMore ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                                            Loading...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ChevronUpIcon className="size-4" />
+                                            Load More Messages
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        )}
+                        {/* Messages */}
+                        {allMessages?.map((message, messageIndex) => (
+                            <div key={message.id ?? message._id} className="mb-4">
+                                {/* Message Metadata for Assistant Messages */}
+                                {message.role === 'assistant' && (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                                        Loading...
-                                    </>
-                                ) : (
-                                    <>
-                                        <ChevronUpIcon className="size-4" />
-                                        Load More Messages
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    )}
-
-                    {/* Messages */}
-                    {allMessages?.map((message, messageIndex) => (
-                        <div key={message.id ?? message._id} className="mb-4">
-                            {message.role === 'assistant' && message.parts?.filter(
-                                (part: any) => part.type === 'source-url',
-                            ).length > 0 && (
-                                    <Sources>
-                                        <SourcesTrigger
-                                            count={
-                                                message.parts.filter(
-                                                    (part: any) => part.type === 'source-url',
-                                                ).length
-                                            }
+                                        <MessageMetadata
+                                            metadata={{ model: message.model, totalTokens: message.totalUsage?.totalTokens, createdAt: message.createdAt }}
+                                            showModel={true}
+                                            showTokens={true}
+                                            showTimestamp={false}
                                         />
-                                        {message.parts.filter((part: any) => part.type === 'source-url').map((part: any, i: number) => (
-                                            <SourcesContent key={`${message.id}-${i}`}>
-                                                <Source
-                                                    key={`${message.id}-${i}`}
-                                                    href={part.url}
-                                                    title={part.url}
-                                                />
-                                            </SourcesContent>
-                                        ))}
-                                    </Sources>
+                                    </>
                                 )}
-                            <Message from={message.role} key={message.id ?? message._id}>
-                                <MessageContent key={`${message.id}-content`}>
-                                    {/* Files grid (images, PDFs, and other files) */}
-                                    {message.parts?.some((part: any) => part.type === 'file') && (
-                                        <div className="mb-4">
-                                            <div className="flex flex-wrap gap-2">
-                                                {message.parts
-                                                    ?.filter((part: any) => part.type === 'file')
-                                                    .map((part: any, i: number) => {
-                                                        const isImage = part.mediaType?.startsWith('image/') ||
-                                                            part.url?.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
-                                                        const isPDF = part.mediaType === 'application/pdf' ||
-                                                            part.url?.match(/\.pdf$/i);
+                                {message.role === 'assistant' && message.parts?.filter(
+                                    (part: any) => part.type === 'source-url' || part.type === 'source-document',
+                                ).length > 0 && (
+                                        <Sources>
+                                            <SourcesTrigger
+                                                count={
+                                                    message.parts.filter(
+                                                        (part: any) => part.type === 'source-url' || part.type === 'source-document',
+                                                    ).length
+                                                }
+                                            />
+                                            {message.parts.filter((part: any) => part.type === 'source-url' || part.type === 'source-document').map((part: any, i: number) => (
+                                                <SourcesContent key={`${message.id}-${i}`}>
+                                                    <Source
+                                                        key={`${message.id}-${i}`}
+                                                        href={part.url || part.sourceId}
+                                                        title={part.title || part.url || part.sourceId}
+                                                    />
+                                                </SourcesContent>
+                                            ))}
+                                        </Sources>
+                                    )}
+                                <Message from={message.role} key={message.id ?? message._id}>
+                                    <MessageContent key={`${message.id}-content`}>
+                                        {/* Files grid (images, PDFs, and other files) */}
+                                        {message.parts?.some((part: any) => part.type === 'file') && (
+                                            <div className="mb-4">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {message.parts
+                                                        ?.filter((part: any) => part.type === 'file')
+                                                        .map((part: any, i: number) => {
+                                                            const isImage = part.mediaType?.startsWith('image/') ||
+                                                                part.url?.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
+                                                            const isPDF = part.mediaType === 'application/pdf' ||
+                                                                part.url?.match(/\.pdf$/i);
 
-                                                        return (
-                                                            <div
-                                                                key={`${message.id}-file-${i}`}
-                                                                className="group relative inline-flex items-center gap-2 p-2 rounded-lg border bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer max-w-[200px]"
-                                                            >
-                                                                {/* File Icon */}
-                                                                <div className="flex-shrink-0">
-                                                                    {isImage ? (
-                                                                        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                        </svg>
-                                                                    ) : isPDF ? (
-                                                                        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                                                            <path d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm3.487.012c-.2 0-.33.018-.407.036v2.61c.077.018.201.018.313.018.817.006 1.349-.444 1.349-1.396.006-.83-.479-1.268-1.255-1.268z" />
-                                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM9.498 16.19c-.309.29-.765.42-1.296.42a2.23 2.23 0 0 1-.308-.018v1.426H7v-3.936A7.558 7.558 0 0 1 8.219 14c.557 0 .953.106 1.22.319.254.202.426.533.426.923-.001.392-.131.723-.367.948zm3.807 1.355c-.42.349-1.059.515-1.84.515-.468 0-.799-.03-1.024-.06v-3.917A7.947 7.947 0 0 1 11.66 14c.757 0 1.249.136 1.633.426.415.308.675.799.675 1.504 0 .763-.279 1.29-.663 1.615zM17 14.77h-1.532v.911H16.9v.734h-1.432v1.604h-.906V14.03H17v.74zM14 9h-1V4l5 5h-4z" />
-                                                                        </svg>
-                                                                    ) : (
-                                                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                        </svg>
-                                                                    )}
-                                                                </div>
+                                                            return (
+                                                                <div
+                                                                    key={`${message.id}-file-${i}`}
+                                                                    className="group relative inline-flex items-center gap-2 p-2 rounded-lg border bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer max-w-[200px]"
+                                                                >
+                                                                    {/* File Icon */}
+                                                                    <div className="flex-shrink-0">
+                                                                        {isImage ? (
+                                                                            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                            </svg>
+                                                                        ) : isPDF ? (
+                                                                            <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                                                                <path d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm3.487.012c-.2 0-.33.018-.407.036v2.61c.077.018.201.018.313.018.817.006 1.349-.444 1.349-1.396.006-.83-.479-1.268-1.255-1.268z" />
+                                                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM9.498 16.19c-.309.29-.765.42-1.296.42a2.23 2.23 0 0 1-.308-.018v1.426H7v-3.936A7.558 7.558 0 0 1 8.219 14c.557 0 .953.106 1.22.319.254.202.426.533.426.923-.001.392-.131.723-.367.948zm3.807 1.355c-.42.349-1.059.515-1.84.515-.468 0-.799-.03-1.024-.06v-3.917A7.947 7.947 0 0 1 11.66 14c.757 0 1.249.136 1.633.426.415.308.675.799.675 1.504 0 .763-.279 1.29-.663 1.615zM17 14.77h-1.532v.911H16.9v.734h-1.432v1.604h-.906V14.03H17v.74zM14 9h-1V4l5 5h-4z" />
+                                                                            </svg>
+                                                                        ) : (
+                                                                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                            </svg>
+                                                                        )}
+                                                                    </div>
 
-                                                                {/* Filename */}
-                                                                <span className="text-xs text-gray-700 dark:text-gray-300 truncate flex-1 min-w-0">
-                                                                    {part.filename || (isImage ? 'Image' : isPDF ? 'PDF Document' : 'Document')}
-                                                                </span>
+                                                                    {/* Filename */}
+                                                                    <span className="text-xs text-gray-700 dark:text-gray-300 truncate flex-1 min-w-0">
+                                                                        {part.filename || (isImage ? 'Image' : isPDF ? 'PDF Document' : 'Document')}
+                                                                    </span>
 
-                                                                {/* Actions */}
-                                                                <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    {/* View button for images and PDFs */}
-                                                                    {(isImage || isPDF) && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                window.open(part.url, '_blank');
-                                                                            }}
+                                                                    {/* Actions */}
+                                                                    <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        {/* View button for images and PDFs */}
+                                                                        {(isImage || isPDF) && (
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    window.open(part.url, '_blank');
+                                                                                }}
+                                                                                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                                                                title={isImage ? "View Image" : "View PDF"}
+                                                                            >
+                                                                                <svg className="w-3 h-3 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                                </svg>
+                                                                            </button>
+                                                                        )}
+
+                                                                        {/* Download button */}
+                                                                        <a
+                                                                            href={part.url}
+                                                                            download={part.filename || 'document'}
+                                                                            onClick={(e) => e.stopPropagation()}
                                                                             className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                                                            title={isImage ? "View Image" : "View PDF"}
+                                                                            title="Download File"
                                                                         >
                                                                             <svg className="w-3 h-3 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                                             </svg>
-                                                                        </button>
-                                                                    )}
-
-                                                                    {/* Download button */}
-                                                                    <a
-                                                                        href={part.url}
-                                                                        download={part.filename || 'document'}
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                                                        title="Download File"
-                                                                    >
-                                                                        <svg className="w-3 h-3 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                        </svg>
-                                                                    </a>
+                                                                        </a>
+                                                                    </div>
                                                                 </div>
+                                                            );
+                                                        })
+                                                    }
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Text and other parts (exclude files) */}
+                                        {message.parts
+                                            ?.filter((part: any) => part.type !== 'image' && part.type !== 'file')
+                                            .map((part: any, i: number) => {
+                                                const isLastMessage = messageIndex === allMessages.length - 1;
+                                                switch (part.type) {
+                                                    case 'text':
+                                                        return (
+                                                            <div key={`${message.id}-${i}`} >
+                                                                <Response>{part.text}</Response>
+                                                                {message.role === 'assistant' && (
+                                                                    <MessageActionsButtons
+                                                                        regenerate={regenerate}
+                                                                        isLastMessage={isLastMessage}
+                                                                        message={message}
+                                                                        tokenPopoverOpen={tokenPopoverOpen}
+                                                                        setTokenPopoverOpen={setTokenPopoverOpen}
+                                                                        status={status} />
+                                                                )}
                                                             </div>
                                                         );
-                                                    })
+                                                    case 'reasoning':
+                                                        return (
+                                                            <>
+                                                                {status === 'streaming' && part.text &&
+                                                                    <Reasoning
+                                                                        key={`${message.id}-reasoning`}
+                                                                        className="w-full"
+                                                                        isStreaming={status === 'streaming'}
+                                                                    >
+                                                                        <ReasoningTrigger />
+                                                                        <ReasoningContent>{part.text}</ReasoningContent>
+                                                                    </Reasoning>
+                                                                }
+                                                            </>
+                                                        );
+                                                    case 'error':
+                                                        return (
+                                                            <Error
+                                                                key={`${message.id}-error-${i}`}
+                                                                errorText={part.errorText}
+                                                                className="mb-4"
+                                                            />
+                                                        );
+                                                    case 'source-url':
+                                                        // Source URLs are handled above in the Sources component
+                                                        return null;
+                                                    case 'source-document':
+                                                        // Source documents are handled above in the Sources component
+                                                        return null;
+                                                    case 'tool-input':
+                                                        return (
+                                                            <ToolInput
+                                                                key={`${message.id}-tool-input-${i}`}
+                                                                toolName={part.toolName}
+                                                                toolCallId={part.toolCallId}
+                                                                input={part.input}
+                                                                className="mb-4"
+                                                            />
+                                                        );
+                                                    case 'tool-output':
+                                                        return (
+                                                            <ToolOutput
+                                                                key={`${message.id}-tool-output-${i}`}
+                                                                toolName={part.toolName}
+                                                                toolCallId={part.toolCallId}
+                                                                output={part.output}
+                                                                className="mb-4"
+                                                            />
+                                                        );
+                                                    default:
+                                                        // Handle custom data parts (data-*)
+                                                        if (part.type?.startsWith('data-')) {
+                                                            const dataType = part.type.replace('data-', '');
+                                                            return (
+                                                                <Data
+                                                                    key={`${message.id}-data-${i}`}
+                                                                    data={part.data}
+                                                                    dataType={dataType}
+                                                                    className="mb-4"
+                                                                />
+                                                            );
+                                                        }
+                                                        return null;
                                                 }
-                                            </div>
-                                        </div>
-                                    )}
+                                            })}
+                                    </MessageContent>
+                                </Message>
+                            </div>
+                        ))}
 
-                                    {/* Text and other parts (exclude files) */}
-                                    {message.parts
-                                        ?.filter((part: any) => part.type !== 'image' && part.type !== 'file')
-                                        .map((part: any, i: number) => {
-                                            const isLastMessage = messageIndex === allMessages.length - 1;
-                                            switch (part.type) {
-                                                case 'text':
-                                                    return (
-                                                        <div key={`${message.id}-${i}`} >
-                                                            <Response>{part.text}</Response>
-                                                            {message.role === 'assistant' && (
-                                                                <MessageActionsButtons
-                                                                    regenerate={regenerate}
-                                                                    isLastMessage={isLastMessage}
-                                                                    message={message}
-                                                                    tokenPopoverOpen={tokenPopoverOpen}
-                                                                    setTokenPopoverOpen={setTokenPopoverOpen}
-                                                                    status={status} />
-                                                            )}
-                                                        </div>
-                                                    );
-                                                case 'reasoning':
-                                                    return (
-                                                        <>
-                                                            {status === 'streaming' && part.text &&
-                                                                <Reasoning
-                                                                    key={`${message.id}-reasoning`}
-                                                                    className="w-full"
-                                                                    isStreaming={status === 'streaming'}
-                                                                >
-                                                                    <ReasoningTrigger />
-                                                                    <ReasoningContent>{part.text}</ReasoningContent>
-                                                                </Reasoning>
-                                                            }
-                                                        </>
-                                                    );
-                                                default:
-                                                    return null;
-                                            }
-                                        })}
-                                </MessageContent>
-                            </Message>
-                        </div>
-                    ))}
+                        {status === 'submitted' && (
+                            <div className="flex items-start justify-start py-4">
+                                <TypingLoader />
+                            </div>
+                        )}
 
-                    {status === 'submitted' && (
-                        <div className="flex items-start justify-start py-4">
-                            <TypingLoader />
-                        </div>
-                    )}
-
-                    {/* Dummy anchor div at the bottom with proper spacing */}
-                    <div ref={bottomRef} className="h-20" />
-                </div>
+                        {/* Dummy anchor div at the bottom with proper spacing */}
+                        <div ref={bottomRef} className="h-20" />
+                    </div>
                 </div>
             )}
 

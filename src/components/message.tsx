@@ -16,7 +16,8 @@ export const Message = ({ className, from, ...props }: MessageProps) => (
     className={cn(
       'group flex w-full items-end justify-end gap-1 py-1',
       from === 'user' ? 'is-user' : 'is-assistant flex-row-reverse justify-end',
-      '[&>div]:max-w-[90%]',
+      // Full width on mobile, 90% max-width on larger screens
+      '[&>div]:max-w-full md:[&>div]:max-w-[90%]',
       className
     )}
     {...props}

@@ -4,16 +4,25 @@ import { cn } from '@/lib/utils';
 import { type ComponentProps, memo } from 'react';
 import { Streamdown } from 'streamdown';
 
-type ResponseProps = ComponentProps<typeof Streamdown>;
+type ResponseProps = ComponentProps<typeof Streamdown> & {
+  variant?: 'default' | 'text' | 'code' | 'markdown';
+};
 
 export const Response = memo(
-  ({ className, ...props }: ResponseProps) => {
+  ({ className, variant = 'default', ...props }: ResponseProps) => {
+    const variantStyles = {
+      default: 'size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 chat-text',
+      text: 'size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 chat-text prose prose-sm max-w-none',
+      code: 'size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 chat-text font-mono text-sm',
+      markdown: 'size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 chat-text prose prose-sm max-w-none'
+    };
+
     return (
       <Streamdown
         shikiTheme={["github-light", "github-dark"]}
         parseIncompleteMarkdown={true}
         className={cn(
-          'size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 chat-text',
+          variantStyles[variant],
           // Enhanced styling for better readability
           '[&_pre]:bg-transparent [&_pre]:border [&_pre]:rounded-lg [&_pre]:p-4',
           '[&_code]:bg-transparent [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm',
